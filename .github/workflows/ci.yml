@@ -53,6 +53,9 @@ jobs:
       - name: Migraciones
         run: pnpm db:migrate
 
+      - name: Tests de integración
+        run: pnpm test:integration
+
       - name: Suite de aislamiento entre negocios
         run: pnpm test:isolation
 

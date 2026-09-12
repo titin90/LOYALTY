@@ -46,9 +46,13 @@ Si una tarea parece exigir romper una de estas, **detente y pregunta**. No la so
 
 ### Código
 
-14. **Sin `any`, sin `@ts-ignore`, sin `eslint-disable`** salvo con un comentario que explique por qué, en la misma línea.
-15. **Toda entrada externa se valida con Zod en el borde**: rutas, server actions, jobs, webhooks, payloads de wallet.
-16. **Nunca modificar o saltar un test para que pase.** Si un test falla, o el código está mal o el test estaba mal — y lo segundo se argumenta, no se asume.
+14. **Nunca leer ni registrar el `message` de un error de base de datos.** Drizzle envuelve el
+    error de Postgres y ese `message` es **el texto de la consulta con sus parámetros** — o sea,
+    nombres y teléfonos de clientes. El mensaje real está en la cadena de `cause`: usa
+    `rootCauseMessage()` de `lib/db/errors.ts`. Hay un test que falla si un teléfono llega a un log.
+15. **Sin `any`, sin `@ts-ignore`, sin `eslint-disable`** salvo con un comentario que explique por qué, en la misma línea.
+16. **Toda entrada externa se valida con Zod en el borde**: rutas, server actions, jobs, webhooks, payloads de wallet.
+17. **Nunca modificar o saltar un test para que pase.** Si un test falla, o el código está mal o el test estaba mal — y lo segundo se argumenta, no se asume.
 
 ---
 
@@ -158,3 +162,13 @@ pnpm lint
 - **Búsqueda por teléfono siempre disponible** como respaldo cuando el cliente no tiene el QR a mano.
 - **Feedback inmediato en el escaneo**: nombre del cliente, puntos sumados, cuántos le faltan.
 - **Cada evento de puntos empuja la actualización a la wallet.** La notificación en pantalla bloqueada es nuestro canal de retención y es gratis — no se omite por "optimizar".
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

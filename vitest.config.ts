@@ -16,6 +16,16 @@ export default defineConfig({
       },
       {
         test: {
+          name: 'integration',
+          include: ['tests/integration/**/*.test.ts'],
+          environment: 'node',
+          setupFiles: ['tests/isolation/setup.ts'],
+          fileParallelism: false,
+          testTimeout: 30_000,
+        },
+      },
+      {
+        test: {
           name: 'isolation',
           include: ['tests/isolation/**/*.test.ts'],
           environment: 'node',

@@ -67,11 +67,51 @@ describe('invariantes del esquema', () => {
 
   it('el rol anon no tiene permisos directos sobre ninguna tabla', async () => {
     const rows = await sql<{ table_name: string; privilege_type: string }[]>`
+      select g.table_name, g.privilege_type
+      from information_schema.role_table_grants g
+      join pg_class c on c.relname = g.table_name
+      join pg_namespace n on n.oid = c.relnamespace and n.nspname = 'public'
+      where g.grantee = 'anon' and g.table_schema = 'public' and c.relkind = 'r'
+    `;
+    expect(rows).toEqual([]);
+  });
+
+  it('anon solo alcanza la vista pública, y solo para leer', async () => {
+    const rows = await sql<{ table_name: string; privilege_type: string }[]>`
       select table_name, privilege_type
       from information_schema.role_table_grants
       where grantee = 'anon' and table_schema = 'public'
+      order by table_name, privilege_type
     `;
-    expect(rows).toEqual([]);
+    expect(rows).toEqual([{ table_name: 'tenant_public', privilege_type: 'SELECT' }]);
+  });
+
+  it('la vista pública no expone ninguna columna de datos personales', async () => {
+    const rows = await sql<{ column_name: string }[]>`
+      select column_name from information_schema.columns
+      where table_schema = 'public' and table_name = 'tenant_public'
+      order by column_name
+    `;
+    // Lista cerrada: agregar una columna aquí es una decisión de privacidad,
+    // no un detalle de implementación.
+    expect(rows.map((r) => r.column_name)).toEqual([
+      'name',
+      'rewards',
+      'slug',
+      'welcome_bonus_points',
+    ]);
+  });
+
+  it('no existe ninguna otra vista que salte RLS', async () => {
+    const rows = await sql<{ viewname: string }[]>`
+      select c.relname as viewname
+      from pg_class c join pg_namespace n on n.oid = c.relnamespace
+      where n.nspname = 'public' and c.relkind = 'v'
+        and coalesce((select option_value from pg_options_to_table(c.reloptions)
+                      where option_name = 'security_invoker'), 'false') = 'false'
+      order by 1
+    `;
+    expect(rows.map((r) => r.viewname)).toEqual(['tenant_public']);
   });
 
   it('la superficie SECURITY DEFINER expuesta son exactamente cuatro funciones', async () => {
