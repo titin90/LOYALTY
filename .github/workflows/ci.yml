@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# El CI es el único revisor que no se deja convencer (CLAUDE.md).
+# Rojo = no entra.
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/postgres
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Tests de dominio
+        run: pnpm test
+
+      - name: Migraciones
+        run: pnpm db:migrate
+
+      - name: Suite de aislamiento entre negocios
+        run: pnpm test:isolation
+
+      # Si el schema de Drizzle cambió sin su migración, aquí aparece un archivo
+      # nuevo y el CI cae. Evita que la base y el código se separen en silencio.
+      - name: Sin deriva entre schema y migraciones
+        run: |
+          pnpm db:generate
+          if [ -n "$(git status --porcelain drizzle/)" ]; then
+            echo "::error::lib/db/schema.ts cambió sin generar su migración. Corre 'pnpm db:generate' y commitea."
+            git status --porcelain drizzle/
+            exit 1
+          fi
+
+      - name: Build
+        run: pnpm build
+
+      - name: Auditoría de dependencias
+        run: pnpm audit --audit-level=high

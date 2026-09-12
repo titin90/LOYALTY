@@ -1,0 +1,34 @@
+/* Paleta de marca — ver idea-2-identidad-visual.md.
+   El dorado es acento: nunca fondo de superficies grandes. */
+:root {
+  --negro-calido: #171412;
+  --dorado: #b8955a;
+  --crema: #f5f1e8;
+  --gris-calido: #8a8478;
+
+  --fondo: var(--crema);
+  --texto: var(--negro-calido);
+  --texto-secundario: var(--gris-calido);
+  --acento: var(--dorado);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fondo: var(--negro-calido);
+    --texto: var(--crema);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--fondo);
+  color: var(--texto);
+  font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
