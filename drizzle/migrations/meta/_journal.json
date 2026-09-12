@@ -64,6 +64,13 @@
       "when": 1789248675536,
       "tag": "0008_authenticate_member",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1789249227279,
+      "tag": "0009_erasure_keeps_ledger",
+      "breakpoints": true
     }
   ]
 }

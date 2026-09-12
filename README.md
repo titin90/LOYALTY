@@ -7,6 +7,7 @@ wallet del teléfono.
 - **Qué se construye y por qué:** [idea-2-app-fidelizacion.md](idea-2-app-fidelizacion.md)
 - **Arquitectura:** [idea-2-arquitectura.md](idea-2-arquitectura.md)
 - **Reglas del repo:** [CLAUDE.md](CLAUDE.md) ← léelo antes de escribir código
+- **Cumplimiento:** [compliance/](compliance/) — registro de tratamiento, runbook de brecha y contrato
 - **Identidad visual:** [idea-2-identidad-visual.md](idea-2-identidad-visual.md)
 
 ## Puesta en marcha
@@ -50,6 +51,7 @@ pnpm test:isolation # aislamiento entre negocios (necesita base de datos)
 | `pnpm test:isolation` | Suite de aislamiento entre negocios |
 | `pnpm db:generate` | Genera una migración desde `lib/db/schema.ts` |
 | `pnpm db:migrate` | Aplica migraciones pendientes (solo hacia adelante) |
+| `pnpm retention` | Simula la purga por retención (`--aplicar` para ejecutarla) |
 
 ## Estado
 
@@ -79,6 +81,20 @@ Probar el escáner en local:
 pnpm tsx scripts/pair-device.ts <slug-del-negocio> "Mostrador"
 # abre el enlace que imprime, en el teléfono o en el navegador
 ```
+
+### Fase 3
+
+| Pieza | Estado |
+|---|---|
+| Derechos ARCO: exportar y suprimir | ✅ |
+| Seguimiento de solicitudes con plazo legal | ✅ |
+| Purga por retención (`pnpm retention`) | ✅ |
+| Cabeceras de seguridad y límite por IP | ✅ |
+| [Documentos de cumplimiento](compliance/) | ✅ |
+| Revisión legal del contrato de encargado | ⏳ pendiente |
+
+La supresión de una persona **no destruye el ledger**: la tarjeta queda sin
+referencia a nadie y las visitas se conservan para la contabilidad del negocio.
 
 ### Fase 2
 

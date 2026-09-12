@@ -33,7 +33,7 @@ import {
 export const tenantPlan = pgEnum('tenant_plan', ['trial', 'basic', 'pro']);
 export const tenantStatus = pgEnum('tenant_status', ['active', 'suspended', 'cancelled']);
 export const memberRole = pgEnum('member_role', ['owner', 'staff']);
-export const cardStatus = pgEnum('card_status', ['active', 'blocked']);
+export const cardStatus = pgEnum('card_status', ['active', 'blocked', 'closed']);
 export const walletPlatform = pgEnum('wallet_platform', ['apple', 'google']);
 
 /** `balance` y `sessions` quedan reservados para membresías prepagadas (Fase 2). */
@@ -218,9 +218,15 @@ export const cards = pgTable(
     tenantId: uuid()
       .notNull()
       .references(() => tenants.id, { onDelete: 'cascade' }),
-    customerId: uuid()
-      .notNull()
-      .references(() => customers.id, { onDelete: 'cascade' }),
+    /**
+     * Nulo cuando el cliente ejerció su derecho de supresión.
+     *
+     * En cascada, borrar al cliente arrastraba la tarjeta y con ella su ledger
+     * completo: la supresión de datos personales no puede destruir la
+     * contabilidad del negocio. Se separa con SET NULL, y el ledger sobrevive
+     * sin ninguna referencia a la persona.
+     */
+    customerId: uuid().references(() => customers.id, { onDelete: 'set null' }),
     /** Lo que va dentro del QR del pase. Opaco, sin PII. */
     serial: text().notNull(),
     /** Proyección mantenida por trigger. NUNCA se escribe desde la aplicación. */

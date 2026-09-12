@@ -12,6 +12,8 @@ export default defineConfig({
           name: 'domain',
           include: ['tests/domain/**/*.test.ts'],
           environment: 'node',
+          // Sin base de datos: ver tests/domain/setup.ts
+          setupFiles: ['tests/domain/setup.ts'],
         },
       },
       {

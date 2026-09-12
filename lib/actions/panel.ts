@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
 import { sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { withUserSession } from '@/lib/db/client';
@@ -127,4 +128,60 @@ export async function revocarEquipo(formData: FormData): Promise<void> {
   );
 
   revalidatePath(`/panel/${session.tenantSlug}/equipos`);
+}
+
+/* ── Derechos ARCO (Ley 21.719) ─────────────────────────────────────────────
+   El negocio es el responsable de los datos; estas acciones son la herramienta
+   con la que responde a su cliente. Todo bajo RLS con su propia sesión. */
+
+export async function suprimirClienteAccion(
+  _previous: PanelState,
+  formData: FormData,
+): Promise<PanelState> {
+  const session = await requireSession();
+  const id = String(formData.get('clienteId') ?? '');
+  const confirmacion = String(formData.get('confirmacion') ?? '').trim().toUpperCase();
+
+  if (!/^[0-9a-f-]{36}$/i.test(id)) {
+    return { status: 'error', message: 'Cliente inválido.' };
+  }
+
+  // La supresión es irreversible: se exige escribirlo, no solo un clic.
+  if (confirmacion !== 'SUPRIMIR') {
+    return { status: 'error', message: 'Escribe SUPRIMIR para confirmar.' };
+  }
+
+  const { suprimirCliente } = await import('@/lib/panel/dsr');
+  const resultado = await suprimirCliente(session.userId, id);
+
+  if (!resultado.ok) return { status: 'error', message: 'No se encontró ese cliente.' };
+
+  revalidatePath(`/panel/${session.tenantSlug}/clientes`);
+  redirect(`/panel/${session.tenantSlug}/clientes?suprimido=1`);
+}
+
+export async function registrarSolicitudAccion(formData: FormData): Promise<void> {
+  const session = await requireSession();
+  const clienteId = String(formData.get('clienteId') ?? '');
+  const tipo = String(formData.get('tipo') ?? '');
+
+  const tipos = ['access', 'rectification', 'deletion', 'objection', 'portability'] as const;
+  if (!/^[0-9a-f-]{36}$/i.test(clienteId)) return;
+  if (!tipos.includes(tipo as (typeof tipos)[number])) return;
+
+  const { registrarSolicitud } = await import('@/lib/panel/dsr');
+  await registrarSolicitud(session.userId, session.tenantId, clienteId, tipo as (typeof tipos)[number]);
+
+  revalidatePath(`/panel/${session.tenantSlug}/solicitudes`);
+}
+
+export async function resolverSolicitudAccion(formData: FormData): Promise<void> {
+  const session = await requireSession();
+  const id = String(formData.get('id') ?? '');
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return;
+
+  const { resolverSolicitud } = await import('@/lib/panel/dsr');
+  await resolverSolicitud(session.userId, id);
+
+  revalidatePath(`/panel/${session.tenantSlug}/solicitudes`);
 }

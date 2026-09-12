@@ -604,3 +604,49 @@ h2,
   flex: 1;
   min-width: 0;
 }
+
+/* ── Derechos del titular ──────────────────────────────────────────────────── */
+.acciones-arco {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.enlace-peligro {
+  font: inherit;
+  font-size: 0.875rem;
+  color: var(--error);
+  background: none;
+  border: 0;
+  padding: 0;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.zona-peligro {
+  margin-top: 2rem;
+  padding: 1.1rem 1.2rem;
+  border: 1px solid var(--error);
+  border-radius: 0.75rem;
+  background: var(--superficie);
+}
+
+.boton-peligro {
+  padding: 0.55rem 0.9rem;
+  font: inherit;
+  font-size: 0.875rem;
+  color: var(--crema);
+  background: var(--error);
+  border: 1px solid var(--error);
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+
+.boton-peligro:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.tabla a {
+  color: var(--texto);
+}

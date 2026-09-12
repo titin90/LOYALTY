@@ -1,4 +1,5 @@
 import { requireSession } from '@/lib/actions/auth';
+import Link from 'next/link';
 import { clientes } from '@/lib/panel/queries';
 
 export const dynamic = 'force-dynamic';
@@ -46,7 +47,9 @@ export default async function ClientesPage({
             <tbody>
               {filas.map((c) => (
                 <tr key={c.id}>
-                  <td>{c.nombre}</td>
+                  <td>
+                    <Link href={`clientes/${c.id}`}>{c.nombre}</Link>
+                  </td>
                   <td className="secundario">{c.telefonoLegible}</td>
                   <td className="num numero">{c.saldo}</td>
                   <td className="num">{c.visitas}</td>

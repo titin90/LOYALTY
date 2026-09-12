@@ -14,20 +14,37 @@ import { drizzle } from 'drizzle-orm/postgres-js';
 import { sql } from 'drizzle-orm';
 import * as schema from './schema';
 
+/**
+ * La conexión se abre de forma perezosa, no al importar el módulo.
+ *
+ * Conectar en la carga hacía que cualquier archivo que llegara hasta aquí —aunque
+ * fuera por una constante— exigiera DATABASE_URL. Rompía tests de lógica pura y
+ * habría roto el arranque en frío de una función serverless que no toca la base.
+ */
 function connectionString(): string {
   const url = process.env.DATABASE_URL;
   if (!url) throw new Error('DATABASE_URL no está definida');
   return url;
 }
 
-const client = postgres(connectionString(), {
-  max: Number(process.env.DB_POOL_MAX ?? 10),
-  prepare: false, // requerido detrás del pooler de Supabase
-});
+type Root = ReturnType<typeof crear>;
 
-const root = drizzle(client, { schema, casing: 'snake_case' });
+function crear() {
+  const client = postgres(connectionString(), {
+    max: Number(process.env.DB_POOL_MAX ?? 10),
+    prepare: false, // requerido detrás del pooler de Supabase
+  });
+  return drizzle(client, { schema, casing: 'snake_case' });
+}
 
-export type Database = typeof root;
+let cached: Root | null = null;
+
+function db(): Root {
+  cached ??= crear();
+  return cached;
+}
+
+export type Database = Root;
 export type Transaction = Parameters<Parameters<Database['transaction']>[0]>[0];
 
 /**
@@ -38,7 +55,7 @@ export async function withUserSession<T>(
   userId: string,
   fn: (tx: Transaction) => Promise<T>,
 ): Promise<T> {
-  return root.transaction(async (tx) => {
+  return db().transaction(async (tx) => {
     await tx.execute(sql`select set_config('role', 'authenticated', true)`);
     await tx.execute(
       sql`select set_config('request.jwt.claims', ${JSON.stringify({ sub: userId })}, true)`,
@@ -52,7 +69,7 @@ export async function withUserSession<T>(
  * invocar las funciones `app.*` de la superficie pública (registro, pases Apple).
  */
 export async function withAnonSession<T>(fn: (tx: Transaction) => Promise<T>): Promise<T> {
-  return root.transaction(async (tx) => {
+  return db().transaction(async (tx) => {
     await tx.execute(sql`select set_config('role', 'anon', true)`);
     return fn(tx);
   });
@@ -67,7 +84,7 @@ export function unsafeAdminDb(reason: 'migration' | 'platform-job' | 'test'): Da
   if (process.env.NODE_ENV === 'production' && reason === 'test') {
     throw new Error('unsafeAdminDb("test") no puede usarse en producción');
   }
-  return root;
+  return db();
 }
 
 export { schema };

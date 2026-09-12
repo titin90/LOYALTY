@@ -145,6 +145,14 @@ pnpm lint
 - **Nombra la columna explícitamente cuando el identificador lleva dígitos.** La derivación
   automática de Drizzle parte en el límite del dígito: `phoneE164` produce `phone_e_164`.
   Se escribe `text('phone_e164')`.
+- **Suprimir a una persona no puede destruir el ledger.** `cards.customer_id` es nulo y su
+  clave foránea es `ON DELETE SET NULL` justamente por eso: en cascada, borrar un cliente
+  arrastraba su tarjeta y todas sus visitas. Hay tests que lo fijan.
+- **Los documentos de `compliance/` están atados al código por tests.** Si cambias el texto del
+  consentimiento, el plazo ARCO o el nombre de una variable de entorno del runbook, el CI cae.
+  Actualiza ambos.
+- **Los tests de dominio corren sin base de datos** (`tests/domain/setup.ts` borra `DATABASE_URL`).
+  Si un módulo de lógica pura empieza a arrastrar el cliente de Postgres, fallan de inmediato.
 - Las funciones de trigger también son `SECURITY DEFINER`: revócales `EXECUTE` a `PUBLIC`.
   Postgres lo concede por defecto y la suite exige que la superficie expuesta sean exactamente
   las cuatro RPC.

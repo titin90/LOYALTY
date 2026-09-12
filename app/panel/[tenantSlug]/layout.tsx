@@ -12,6 +12,7 @@ const SECCIONES = [
   { href: '/premios', etiqueta: 'Premios' },
   { href: '/tarjeta', etiqueta: 'Tarjeta' },
   { href: '/equipos', etiqueta: 'Equipos' },
+  { href: '/solicitudes', etiqueta: 'Solicitudes' },
 ];
 
 export default async function PanelLayout({
