@@ -26,9 +26,11 @@ Si una tarea parece exigir romper una de estas, **detente y pregunta**. No la so
    está cerrada en `tests/isolation/schema-invariants.test.ts`. **Agregar una exige aprobación
    humana explícita**: el test falla y hay que editarlo a mano, que es justamente el punto.
 
-   Superficie actual (7): `register_customer`, `record_scan`, `redeem_reward`, `pass_payload`,
-   `apple_register_device`, `apple_unregister_device`, `apple_updated_serials`. Las tres últimas
-   existen porque los dispositivos de Apple llaman al web service sin sesión de usuario.
+   Superficie actual (8): `register_customer`, `record_scan`, `redeem_reward`, `pass_payload`,
+   `authenticate_member`, `apple_register_device`, `apple_unregister_device`,
+   `apple_updated_serials`. Las tres de Apple existen porque sus dispositivos llaman al web
+   service sin sesión de usuario, y `authenticate_member` porque iniciar sesión es, por
+   definición, una operación previa a tener sesión.
 
    Antes de agregar una, agota estas salidas: ¿se puede resolver bajo RLS con una sesión de
    usuario? ¿Se puede generalizar una función existente en vez de sumar otra? ¿Basta una vista

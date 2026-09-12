@@ -25,6 +25,9 @@ export interface SeededTenant {
   rewardId: string;
   deviceId: string;
   staffPin: string;
+  memberId: string;
+  email: string;
+  password: string;
 }
 
 /** Borra todo y siembra dos negocios independientes, A y B. */
@@ -50,9 +53,14 @@ async function seedTenant(slug: string, pin: string): Promise<SeededTenant> {
   await sql`insert into public.tenant_settings (tenant_id) values (${tenantId})`;
 
   const userId = crypto.randomUUID();
-  await sql`
-    insert into public.tenant_members (tenant_id, user_id, role, name, pin_hash)
-    values (${tenantId}, ${userId}, 'owner', 'Dueño', app.hash_pin(${pin}))
+  const email = `duenio-${slug}@ejemplo.cl`;
+  const password = `clave-${slug}-segura`;
+
+  const [member] = await sql<{ id: string }[]>`
+    insert into public.tenant_members (tenant_id, user_id, role, name, pin_hash, email, password_hash)
+    values (${tenantId}, ${userId}, 'owner', 'Dueño', app.hash_pin(${pin}),
+            ${email}, app.hash_pin(${password}))
+    returning id
   `;
 
   const [device] = await sql<{ id: string }[]>`
@@ -85,6 +93,9 @@ async function seedTenant(slug: string, pin: string): Promise<SeededTenant> {
     rewardId: rewardRow!.id,
     deviceId: device!.id,
     staffPin: pin,
+    memberId: member!.id,
+    email,
+    password,
   };
 }
 

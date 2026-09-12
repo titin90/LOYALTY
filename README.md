@@ -80,6 +80,24 @@ pnpm tsx scripts/pair-device.ts <slug-del-negocio> "Mostrador"
 # abre el enlace que imprime, en el teléfono o en el navegador
 ```
 
+### Fase 2
+
+| Pieza | Estado |
+|---|---|
+| Entrada del dueño al panel | ✅ |
+| Resumen, clientes y búsqueda | ✅ |
+| Clientes en riesgo con win-back por WhatsApp | ✅ |
+| Premios | ✅ |
+| Personalización de tarjeta con preview en vivo | ✅ |
+| Equipos: emparejar y revocar | ✅ |
+
+Crear el primer dueño en local:
+
+```bash
+psql "$DATABASE_URL" -c "select app.set_member_password(
+  (select id from tenant_members limit 1), 'tu@correo.cl', 'tu-clave');"
+```
+
 ### Fase 0
 
 | Pieza | Estado |

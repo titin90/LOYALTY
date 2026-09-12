@@ -29,6 +29,7 @@ jobs:
       # Valor de relleno: los tests firman con su propia clave y nada aquí toca
       # producción. El secreto real vive en el entorno de despliegue.
       DEVICE_TOKEN_SECRET: ci-solo-para-pruebas-no-usar-en-produccion-32c
+      SESSION_SECRET: ci-solo-para-pruebas-no-usar-en-produccion-32c
 
     steps:
       - uses: actions/checkout@v5

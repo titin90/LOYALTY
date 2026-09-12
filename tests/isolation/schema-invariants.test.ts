@@ -130,9 +130,12 @@ describe('invariantes del esquema', () => {
     // secundario de agregar una feature (CLAUDE.md regla 3).
     expect(rows.map((r) => r.proname)).toEqual([
       // Web service de Apple: los llaman sus dispositivos, sin sesión.
+      // (la consulta ordena por nombre, así que la lista va alfabética)
       'apple_register_device',
       'apple_unregister_device',
       'apple_updated_serials',
+      // Iniciar sesión es, por definición, previo a tener sesión.
+      'authenticate_member',
       // Emisión de pases y flujos públicos.
       'pass_payload',
       'record_scan',

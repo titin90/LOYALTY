@@ -50,6 +50,20 @@
       "when": 1789247794134,
       "tag": "0006_apple_web_service",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1789248666627,
+      "tag": "0007_member_login",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1789248675536,
+      "tag": "0008_authenticate_member",
+      "breakpoints": true
     }
   ]
 }

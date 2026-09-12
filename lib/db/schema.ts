@@ -116,9 +116,14 @@ export const tenantMembers = pgTable(
     tenantId: uuid()
       .notNull()
       .references(() => tenants.id, { onDelete: 'cascade' }),
-    userId: uuid().notNull(),
+    userId: uuid().notNull().defaultRandom(),
     role: memberRole().notNull().default('staff'),
     name: text().notNull(),
+    /** Solo los dueños entran al panel; el personal marca con PIN en el escáner. */
+    email: text(),
+    passwordHash: text(),
+    failedLoginAttempts: integer().notNull().default(0),
+    loginLockedUntil: timestamp({ withTimezone: true }),
     /** PIN de 4 dígitos hasheado con bcrypt. Nunca en claro, nunca en logs.
      *  El bloqueo por intentos fallidos NO vive aquí: ver `devices`. */
     pinHash: text(),
@@ -127,6 +132,7 @@ export const tenantMembers = pgTable(
   },
   (t) => [
     uniqueIndex('tenant_members_tenant_user_key').on(t.tenantId, t.userId),
+    uniqueIndex('tenant_members_email_key').on(sql`lower(${t.email})`),
     index('tenant_members_tenant_idx').on(t.tenantId, t.active),
   ],
 );
