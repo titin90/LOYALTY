@@ -119,10 +119,9 @@ export const tenantMembers = pgTable(
     userId: uuid().notNull(),
     role: memberRole().notNull().default('staff'),
     name: text().notNull(),
-    /** PIN de 4 dígitos hasheado con bcrypt. Nunca en claro, nunca en logs. */
+    /** PIN de 4 dígitos hasheado con bcrypt. Nunca en claro, nunca en logs.
+     *  El bloqueo por intentos fallidos NO vive aquí: ver `devices`. */
     pinHash: text(),
-    failedPinAttempts: integer().notNull().default(0),
-    lockedUntil: timestamp({ withTimezone: true }),
     active: boolean().notNull().default(true),
     createdAt: createdAt(),
   },
@@ -142,6 +141,15 @@ export const devices = pgTable(
     name: text().notNull(),
     lastSeenAt: timestamp({ withTimezone: true }),
     revokedAt: timestamp({ withTimezone: true }),
+    /**
+     * Bloqueo por fuerza bruta del PIN, contado por DISPOSITIVO y no por persona.
+     * El PIN es lo único que identifica a quien marca, así que un fallo no se
+     * puede atribuir a nadie: llevar el contador en `tenant_members` significaba
+     * que diez intentos erróneos dejaban sin marcar a todo el local, y cualquiera
+     * podía provocarlo. Contra el dispositivo, hace falta tenerlo en la mano.
+     */
+    failedPinAttempts: integer().notNull().default(0),
+    lockedUntil: timestamp({ withTimezone: true }),
     createdAt: createdAt(),
   },
   (t) => [index('devices_tenant_idx').on(t.tenantId)],

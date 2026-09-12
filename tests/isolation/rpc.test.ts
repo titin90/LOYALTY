@@ -101,21 +101,31 @@ describe('record_scan', () => {
   });
 
   it('el PIN del negocio B no sirve para marcar en la tarjeta de A', async () => {
-    await expect(
-      asUser(
-        b.userId,
-        (tx) => tx`select app.record_scan(${a.cardSerial}, ${b.staffPin}, ${b.deviceId}, ${key()})`,
-      ),
-    ).rejects.toThrow(/PIN invalido/i);
+    const [row] = await asUser(
+      b.userId,
+      (tx) => tx`select app.record_scan(${a.cardSerial}, ${b.staffPin}, ${b.deviceId}, ${key()}) as r`,
+    );
+    // Devuelve en vez de lanzar para que el contador de intentos se confirme.
+    expect(row!.r).toMatchObject({ ok: false, error: 'device_revoked' });
   });
 
   it('un dispositivo de otro negocio no puede marcar', async () => {
-    await expect(
-      asUser(
-        a.userId,
-        (tx) => tx`select app.record_scan(${a.cardSerial}, ${a.staffPin}, ${b.deviceId}, ${key()})`,
-      ),
-    ).rejects.toThrow(/no autorizado/i);
+    const [row] = await asUser(
+      a.userId,
+      (tx) => tx`select app.record_scan(${a.cardSerial}, ${a.staffPin}, ${b.deviceId}, ${key()}) as r`,
+    );
+    expect(row!.r).toMatchObject({ ok: false, error: 'device_revoked' });
+  });
+
+  it('el contador de intentos fallidos SOBREVIVE al fallo de PIN', async () => {
+    await asUser(
+      a.userId,
+      (tx) => tx`select app.record_scan(${a.cardSerial}, '0000', ${a.deviceId}, ${key()})`,
+    );
+    const [device] = await sql<{ failed_pin_attempts: number }[]>`
+      select failed_pin_attempts from public.devices where id = ${a.deviceId}
+    `;
+    expect(device!.failed_pin_attempts).toBe(1);
   });
 
   it('reenviar el mismo evento desde la cola offline no suma dos veces', async () => {
@@ -177,6 +187,29 @@ describe('redeem_reward', () => {
         (tx) => tx`select app.redeem_reward(${a.cardSerial}, ${b.rewardId}, ${a.staffPin}, ${a.deviceId}, ${key()})`,
       ),
     ).rejects.toThrow(/no disponible/i);
+  });
+
+  it('tras 10 PIN fallidos el dispositivo queda bloqueado 15 minutos', async () => {
+    for (let i = 0; i < 10; i += 1) {
+      await asUser(
+        a.userId,
+        (tx) => tx`select app.record_scan(${a.cardSerial}, '0000', ${a.deviceId}, ${key()})`,
+      );
+    }
+    const [row] = await asUser(
+      a.userId,
+      (tx) => tx`select app.record_scan(${a.cardSerial}, ${a.staffPin}, ${a.deviceId}, ${key()}) as r`,
+    );
+    expect(row!.r).toMatchObject({ ok: false, error: 'locked' });
+  });
+
+  it('un PIN correcto limpia el contador de intentos', async () => {
+    await asUser(a.userId, (tx) => tx`select app.record_scan(${a.cardSerial}, '0000', ${a.deviceId}, ${key()})`);
+    await asUser(a.userId, (tx) => tx`select app.record_scan(${a.cardSerial}, ${a.staffPin}, ${a.deviceId}, ${key()})`);
+    const [device] = await sql<{ failed_pin_attempts: number }[]>`
+      select failed_pin_attempts from public.devices where id = ${a.deviceId}
+    `;
+    expect(device!.failed_pin_attempts).toBe(0);
   });
 
   it('no se puede canjear sin puntos suficientes', async () => {

@@ -17,3 +17,6 @@ google-service-account*.json
 certs/
 next-env.d.ts
 .next/
+
+# El wasm del lector se copia en postinstall/prebuild
+public/zxing_reader.wasm

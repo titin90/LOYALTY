@@ -53,7 +53,26 @@ pnpm test:isolation # aislamiento entre negocios (necesita base de datos)
 
 ## Estado
 
-**Fase 0 — Fundaciones, completa y verificada.**
+**Fase 1 en curso.** Fase 0 completa y verificada.
+
+### Fase 1
+
+| Pieza | Estado |
+|---|---|
+| Registro del cliente (`/r/[slug]`) | ✅ |
+| Escáner PWA con emparejamiento de equipo y PIN | ✅ |
+| Cola de marcajes sin conexión (IndexedDB) | ✅ |
+| Canje de premios | ✅ |
+| Pases de Apple/Google Wallet | ⏳ bloqueado por certificado e issuer account |
+
+Probar el escáner en local:
+
+```bash
+pnpm tsx scripts/pair-device.ts <slug-del-negocio> "Mostrador"
+# abre el enlace que imprime, en el teléfono o en el navegador
+```
+
+### Fase 0
 
 | Pieza | Estado |
 |---|---|
