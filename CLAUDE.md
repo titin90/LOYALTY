@@ -145,6 +145,11 @@ pnpm lint
 - **Nombra la columna explícitamente cuando el identificador lleva dígitos.** La derivación
   automática de Drizzle parte en el límite del dígito: `phoneE164` produce `phone_e_164`.
   Se escribe `text('phone_e164')`.
+- **Toda operación del escáner exige el PIN, incluidas las de solo lectura.** La cookie del
+  dispositivo dice de qué negocio es el equipo, no quién lo está usando: el PIN se escribe
+  antes de llegar al escáner pero no se valida hasta que el servidor lo comprueba. Una lectura
+  que devuelva datos de clientes sin verificarlo deja la base del local a merced de quien tenga
+  el teléfono en la mano.
 - **Suprimir a una persona no puede destruir el ledger.** `cards.customer_id` es nulo y su
   clave foránea es `ON DELETE SET NULL` justamente por eso: en cascada, borrar un cliente
   arrastraba su tarjeta y todas sus visitas. Hay tests que lo fijan.

@@ -2,7 +2,14 @@
 
 import { cookies } from 'next/headers';
 import { verifyDeviceToken, deviceSecret, type DeviceClaims } from '@/lib/device/token';
-import { recordScan, redeemReward, type ScanOutcome, type RedeemOutcome } from '@/lib/scanning';
+import {
+  recordScan,
+  redeemReward,
+  buscarPorTelefono,
+  type ScanOutcome,
+  type RedeemOutcome,
+  type ClienteEncontrado,
+} from '@/lib/scanning';
 
 const DEVICE_COOKIE = 'device_token';
 
@@ -38,4 +45,13 @@ export async function submitRedeem(
     return { ok: false, failure: 'device_revoked', message: 'Este equipo no está emparejado.' };
   }
   return redeemReward({ serial, rewardId, pin, claims, idempotencyKey });
+}
+
+export async function buscarCliente(
+  consulta: string,
+  pin: string,
+): Promise<ClienteEncontrado[]> {
+  const claims = await currentDevice();
+  if (!claims) return [];
+  return buscarPorTelefono(claims, consulta, pin);
 }

@@ -13,11 +13,23 @@ import { rootCauseMessage, sqlState } from '@/lib/db/errors';
 import type { DeviceClaims } from '@/lib/device/token';
 import { pushCardUpdate } from '@/lib/wallet/push';
 
+export interface PremioCanjeable {
+  readonly id: string;
+  readonly nombre: string;
+  readonly umbral: number;
+}
+
 export interface ScanSuccess {
   readonly customerName: string;
   readonly earned: number;
   readonly balance: number;
   readonly pointsToNextReward: number | null;
+  /**
+   * Premios que este cliente ya puede cobrar AHORA. Van en la respuesta del
+   * marcaje porque el momento de canjear es justo este: el cliente está en el
+   * mostrador. Obligar a buscarlo en otra pantalla es como no tenerlo.
+   */
+  readonly redeemable: readonly PremioCanjeable[];
   /** El evento ya existía: la cola sin conexión reenvió el mismo marcaje. */
   readonly duplicate: boolean;
 }
@@ -113,6 +125,13 @@ export async function recordScan(request: ScanRequest): Promise<ScanOutcome> {
         await notifyWallets(found[0]!.id, serial);
       }
 
+      // Bajo RLS: solo pueden aparecer premios de este negocio.
+      const premios = (await tx.execute(
+        sql`select id, name, threshold from public.rewards
+            where active and threshold <= ${row.r.balance}
+            order by threshold desc`,
+      )) as unknown as { id: string; name: string; threshold: number }[];
+
       return {
         ok: true as const,
         result: {
@@ -120,6 +139,7 @@ export async function recordScan(request: ScanRequest): Promise<ScanOutcome> {
           earned: row.r.earned ?? 0,
           balance: row.r.balance,
           pointsToNextReward: row.r.points_to_next_reward,
+          redeemable: premios.map((p) => ({ id: p.id, nombre: p.name, umbral: p.threshold })),
           duplicate: row.r.duplicate,
         },
       };
@@ -206,6 +226,73 @@ async function notifyWallets(cardId: string, serial: string): Promise<void> {
     console.error('[escaner] no se pudo avisar a las wallets', {
       raw: rootCauseMessage(error),
     });
+  }
+}
+
+export interface ClienteEncontrado {
+  readonly serial: string;
+  readonly nombre: string;
+  readonly saldo: number;
+  /** Últimos dígitos, para distinguir homónimos sin mostrar el número entero. */
+  readonly telefonoParcial: string;
+}
+
+/**
+ * Respaldo cuando el cliente no trae el QR a mano.
+ *
+ * Exige el PIN igual que marcar una visita. La cookie del dispositivo por sí sola
+ * NO alcanza: el PIN se escribe antes de llegar al escáner pero no se valida
+ * hasta que ocurre un marcaje, así que sin esta comprobación cualquiera con el
+ * teléfono del mostrador podía escribir cuatro dígitos cualesquiera y barrer la
+ * base de clientes del local.
+ *
+ * Además se exigen al menos 4 dígitos, se devuelven como mucho 5 resultados y
+ * nunca el número completo — solo lo justo para distinguir a dos homónimos.
+ */
+export async function buscarPorTelefono(
+  claims: DeviceClaims,
+  consulta: string,
+  pin: string,
+): Promise<ClienteEncontrado[]> {
+  const digitos = consulta.replace(/\D/g, '');
+  if (digitos.length < 4) return [];
+  if (!/^\d{4,8}$/.test(pin)) return [];
+
+  try {
+    return await withUserSession(claims.userId, async (tx) => {
+      // El PIN se compara contra los hashes que RLS ya deja ver: los de este
+      // negocio. Sin coincidencia, la consulta no devuelve ninguna fila.
+      const filas = (await tx.execute(
+        sql`select k.serial, c.name, k.points_balance, c.phone_e164
+            from public.customers c
+            join public.cards k on k.customer_id = c.id
+            where c.deleted_at is null
+              and k.status = 'active'
+              and c.phone_e164 like ${'%' + digitos + '%'}
+              and exists (
+                select 1 from public.tenant_members m
+                where m.active and m.pin_hash is not null
+                  and app.verify_pin(${pin}, m.pin_hash)
+              )
+            order by c.name
+            limit 5`,
+      )) as unknown as {
+        serial: string;
+        name: string;
+        points_balance: number;
+        phone_e164: string;
+      }[];
+
+      return filas.map((f) => ({
+        serial: f.serial,
+        nombre: f.name,
+        saldo: f.points_balance,
+        telefonoParcial: `··· ${f.phone_e164.slice(-4)}`,
+      }));
+    });
+  } catch (error) {
+    console.error('[escaner] búsqueda fallida', { raw: rootCauseMessage(error) });
+    return [];
   }
 }
 

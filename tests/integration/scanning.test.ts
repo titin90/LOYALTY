@@ -3,7 +3,7 @@
  * empleado, antifraude, idempotencia de la cola sin conexión y canje.
  */
 import { describe, it, expect, beforeEach } from 'vitest';
-import { recordScan, redeemReward } from '@/lib/scanning';
+import { recordScan, redeemReward, buscarPorTelefono } from '@/lib/scanning';
 import type { DeviceClaims } from '@/lib/device/token';
 import { sql, seedTwoTenants, type SeededTenant } from '../isolation/helpers';
 
@@ -174,5 +174,176 @@ describe('redeemReward', () => {
       idempotencyKey: key(),
     });
     expect(outcome).toMatchObject({ ok: false, failure: 'reward_gone' });
+  });
+});
+
+describe('canje desde el escáner', () => {
+  it('el marcaje avisa qué puede canjear el cliente en ese momento', async () => {
+    // Justo en el umbral del premio sembrado (5).
+    await sql`
+      insert into public.point_events (tenant_id, card_id, delta, kind, idempotency_key)
+      values (${a.tenantId}, ${a.cardId}, 4, 'adjust', 'carga-umbral')
+    `;
+
+    const outcome = await recordScan({
+      serial: a.cardSerial,
+      pin: a.staffPin,
+      claims: claimsFor(a),
+      idempotencyKey: key(),
+    });
+
+    expect(outcome.ok).toBe(true);
+    if (!outcome.ok) return;
+    expect(outcome.result.balance).toBe(5);
+    expect(outcome.result.redeemable).toHaveLength(1);
+    expect(outcome.result.redeemable[0]).toMatchObject({ nombre: 'Corte gratis', umbral: 5 });
+  });
+
+  it('sin puntos suficientes no ofrece nada que canjear', async () => {
+    const outcome = await recordScan({
+      serial: a.cardSerial,
+      pin: a.staffPin,
+      claims: claimsFor(a),
+      idempotencyKey: key(),
+    });
+    expect(outcome.ok && outcome.result.redeemable).toEqual([]);
+  });
+
+  it('nunca ofrece un premio de otro negocio', async () => {
+    await sql`
+      insert into public.point_events (tenant_id, card_id, delta, kind, idempotency_key)
+      values (${a.tenantId}, ${a.cardId}, 99, 'adjust', 'carga-alta')
+    `;
+    // El premio de B tiene el mismo umbral: si se colara, aparecería aquí.
+    const outcome = await recordScan({
+      serial: a.cardSerial,
+      pin: a.staffPin,
+      claims: claimsFor(a),
+      idempotencyKey: key(),
+    });
+
+    expect(outcome.ok).toBe(true);
+    if (!outcome.ok) return;
+    expect(outcome.result.redeemable).toHaveLength(1);
+    expect(outcome.result.redeemable[0]!.id).toBe(a.rewardId);
+  });
+
+  it('un premio pausado deja de ofrecerse', async () => {
+    await sql`
+      insert into public.point_events (tenant_id, card_id, delta, kind, idempotency_key)
+      values (${a.tenantId}, ${a.cardId}, 9, 'adjust', 'carga')
+    `;
+    await sql`update public.rewards set active = false where id = ${a.rewardId}`;
+
+    const outcome = await recordScan({
+      serial: a.cardSerial,
+      pin: a.staffPin,
+      claims: claimsFor(a),
+      idempotencyKey: key(),
+    });
+    expect(outcome.ok && outcome.result.redeemable).toEqual([]);
+  });
+
+  it('marcar y canjear seguido deja el saldo correcto', async () => {
+    await sql`
+      insert into public.point_events (tenant_id, card_id, delta, kind, idempotency_key)
+      values (${a.tenantId}, ${a.cardId}, 4, 'adjust', 'carga')
+    `;
+
+    const marcaje = await recordScan({
+      serial: a.cardSerial,
+      pin: a.staffPin,
+      claims: claimsFor(a),
+      idempotencyKey: key(),
+    });
+    if (!marcaje.ok) throw new Error('esperaba éxito');
+
+    const canje = await redeemReward({
+      serial: a.cardSerial,
+      rewardId: marcaje.result.redeemable[0]!.id,
+      pin: a.staffPin,
+      claims: claimsFor(a),
+      idempotencyKey: key(),
+    });
+
+    expect(canje).toMatchObject({ ok: true, balance: 0 });
+  });
+});
+
+describe('búsqueda por teléfono', () => {
+  it('encuentra por los últimos dígitos', async () => {
+    const [cliente] = await sql<{ phone_e164: string }[]>`
+      select phone_e164 from public.customers where id = ${a.customerId}
+    `;
+    const resultados = await buscarPorTelefono(claimsFor(a), cliente!.phone_e164.slice(-5), a.staffPin);
+
+    expect(resultados).toHaveLength(1);
+    expect(resultados[0]!.nombre).toBe('Cliente');
+    expect(resultados[0]!.serial).toBe(a.cardSerial);
+  });
+
+  it('NO devuelve el teléfono completo, solo los últimos dígitos', async () => {
+    const [cliente] = await sql<{ phone_e164: string }[]>`
+      select phone_e164 from public.customers where id = ${a.customerId}
+    `;
+    const resultados = await buscarPorTelefono(claimsFor(a), cliente!.phone_e164.slice(-5), a.staffPin);
+
+    expect(resultados[0]!.telefonoParcial).not.toContain(cliente!.phone_e164);
+    expect(resultados[0]!.telefonoParcial).toBe(`··· ${cliente!.phone_e164.slice(-4)}`);
+  });
+
+  it.each(['', '1', '123'])('con %j dígitos no busca nada: evita pasearse por la lista', async (q) => {
+    expect(await buscarPorTelefono(claimsFor(a), q, a.staffPin)).toEqual([]);
+  });
+
+  it('SIN PIN válido no devuelve nada, aunque el dispositivo esté emparejado', async () => {
+    const [cliente] = await sql<{ phone_e164: string }[]>`
+      select phone_e164 from public.customers where id = ${a.customerId}
+    `;
+    const consulta = cliente!.phone_e164.slice(-5);
+
+    // Con el PIN correcto sí aparece: la diferencia es exactamente el PIN.
+    expect(await buscarPorTelefono(claimsFor(a), consulta, a.staffPin)).toHaveLength(1);
+    expect(await buscarPorTelefono(claimsFor(a), consulta, '0000')).toEqual([]);
+    expect(await buscarPorTelefono(claimsFor(a), consulta, 'no-es-pin')).toEqual([]);
+  });
+
+  it('el PIN de otro negocio no sirve para buscar aquí', async () => {
+    const [cliente] = await sql<{ phone_e164: string }[]>`
+      select phone_e164 from public.customers where id = ${a.customerId}
+    `;
+    expect(
+      await buscarPorTelefono(claimsFor(a), cliente!.phone_e164.slice(-5), b.staffPin),
+    ).toEqual([]);
+  });
+
+  it('nunca encuentra clientes de otro negocio', async () => {
+    const [cliente] = await sql<{ phone_e164: string }[]>`
+      select phone_e164 from public.customers where id = ${b.customerId}
+    `;
+    expect(await buscarPorTelefono(claimsFor(a), cliente!.phone_e164.slice(-5), a.staffPin)).toEqual([]);
+  });
+
+  it('no muestra clientes suprimidos', async () => {
+    const [cliente] = await sql<{ phone_e164: string }[]>`
+      select phone_e164 from public.customers where id = ${a.customerId}
+    `;
+    await sql`update public.customers set deleted_at = now() where id = ${a.customerId}`;
+    expect(await buscarPorTelefono(claimsFor(a), cliente!.phone_e164.slice(-5), a.staffPin)).toEqual([]);
+  });
+
+  it('el serial encontrado sirve para marcar la visita', async () => {
+    const [cliente] = await sql<{ phone_e164: string }[]>`
+      select phone_e164 from public.customers where id = ${a.customerId}
+    `;
+    const [encontrado] = await buscarPorTelefono(claimsFor(a), cliente!.phone_e164.slice(-5), a.staffPin);
+
+    const outcome = await recordScan({
+      serial: encontrado!.serial,
+      pin: a.staffPin,
+      claims: claimsFor(a),
+      idempotencyKey: key(),
+    });
+    expect(outcome.ok && outcome.result.balance).toBe(1);
   });
 });

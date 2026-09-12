@@ -650,3 +650,115 @@ h2,
 .tabla a {
   color: var(--texto);
 }
+
+/* ── Canje desde el escáner ────────────────────────────────────────────────── */
+.canje-opciones {
+  display: grid;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 20rem;
+  margin: 0.75rem 0 0;
+}
+
+.boton-canje {
+  padding: 0.95rem 1rem;
+  font: inherit;
+  font-weight: 600;
+  color: var(--negro-calido);
+  background: var(--dorado);
+  border: 1px solid var(--dorado);
+  border-radius: 0.6rem;
+  cursor: pointer;
+}
+
+.boton-canje:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.boton-escaner {
+  margin-top: 1.25rem;
+  padding: 0.8rem 1.5rem;
+  font: inherit;
+  color: var(--crema);
+  background: transparent;
+  border: 1px solid var(--gris-calido);
+  border-radius: 0.6rem;
+  cursor: pointer;
+}
+
+.boton-escaner--tenue {
+  border-color: transparent;
+  color: var(--texto-secundario);
+  text-decoration: underline;
+}
+
+/* ── Búsqueda por teléfono en el escáner ───────────────────────────────────── */
+.escaner-barra-derecha {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.escaner-buscar {
+  font: inherit;
+  font-size: 0.875rem;
+  color: var(--crema);
+  background: transparent;
+  border: 1px solid rgb(245 241 232 / 35%);
+  border-radius: 0.5rem;
+  padding: 0.35rem 0.65rem;
+  cursor: pointer;
+}
+
+.escaner-overlay--arriba {
+  justify-content: flex-start;
+  padding-top: max(3.5rem, env(safe-area-inset-top));
+}
+
+.buscador-escaner {
+  width: 100%;
+  max-width: 20rem;
+  padding: 0.9rem 1rem;
+  font: inherit;
+  font-size: 1.5rem;
+  letter-spacing: 0.18em;
+  text-align: center;
+  color: var(--crema);
+  background: transparent;
+  border: 1px solid var(--gris-calido);
+  border-radius: 0.6rem;
+}
+
+.buscador-resultados {
+  width: 100%;
+  max-width: 22rem;
+  margin-top: 1rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.buscador-resultado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+  padding: 0.85rem 1rem;
+  font: inherit;
+  text-align: left;
+  color: var(--crema);
+  background: transparent;
+  border: 1px solid var(--gris-calido);
+  border-radius: 0.6rem;
+  cursor: pointer;
+}
+
+.buscador-resultado:active {
+  border-color: var(--dorado);
+}
+
+.buscador-resultado .numero {
+  font-size: 1.35rem;
+  color: var(--dorado);
+}

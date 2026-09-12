@@ -52,6 +52,7 @@ pnpm test:isolation # aislamiento entre negocios (necesita base de datos)
 | `pnpm db:generate` | Genera una migración desde `lib/db/schema.ts` |
 | `pnpm db:migrate` | Aplica migraciones pendientes (solo hacia adelante) |
 | `pnpm retention` | Simula la purga por retención (`--aplicar` para ejecutarla) |
+| `pnpm seed` | Siembra 3 negocios y ~120 clientes de prueba (destructivo, solo local) |
 
 ## Estado
 
@@ -64,7 +65,8 @@ pnpm test:isolation # aislamiento entre negocios (necesita base de datos)
 | Registro del cliente (`/r/[slug]`) | ✅ |
 | Escáner PWA con emparejamiento de equipo y PIN | ✅ |
 | Cola de marcajes sin conexión (IndexedDB) | ✅ |
-| Canje de premios | ✅ |
+| Canje de premios desde el escáner | ✅ |
+| Búsqueda por teléfono cuando no hay QR | ✅ |
 | Emisión de pases Apple (.pkpass firmado) | ✅ |
 | Emisión de pases Google (LoyaltyObject + enlace de guardado) | ✅ |
 | Web service de Apple y push por APNs | ✅ |
@@ -75,12 +77,14 @@ plataforma se declara no disponible y la interfaz lo dice, en vez de romperse.
 Cuando lleguen el certificado y el issuer account, solo hay que completar
 `.env` — no hay código pendiente.
 
-Probar el escáner en local:
+Probar todo en local con datos realistas:
 
 ```bash
-pnpm tsx scripts/pair-device.ts <slug-del-negocio> "Mostrador"
-# abre el enlace que imprime, en el teléfono o en el navegador
+pnpm seed     # 3 negocios, ~120 clientes, historiales de visitas variados
 ```
+
+Imprime los accesos al panel. Para el escáner, crea un equipo desde
+**Panel → Equipos** y abre el enlace en el teléfono.
 
 ### Fase 3
 

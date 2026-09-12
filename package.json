@@ -17,7 +17,8 @@
     "test:integration": "vitest run --project integration",
     "prebuild": "node scripts/copy-wasm.mjs",
     "postinstall": "node scripts/copy-wasm.mjs",
-    "retention": "tsx scripts/retention.ts"
+    "retention": "tsx scripts/retention.ts",
+    "seed": "tsx scripts/seed.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

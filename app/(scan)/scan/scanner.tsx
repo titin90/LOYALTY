@@ -6,9 +6,17 @@ import { submitScan } from '@/lib/actions/scan';
 import { enqueue, dequeue, pending } from '@/lib/offline-queue';
 import type { ScanOutcome } from '@/lib/scanning';
 import { PinPad } from './pin-pad';
+import { Buscador } from './buscador';
 import { Resultado } from './resultado';
 
-type Estado = 'iniciando' | 'sin-camara' | 'pin' | 'escaneando' | 'enviando' | 'resultado';
+type Estado =
+  | 'iniciando'
+  | 'sin-camara'
+  | 'pin'
+  | 'escaneando'
+  | 'buscando'
+  | 'enviando'
+  | 'resultado';
 
 /** El mismo código no se vuelve a leer durante este tiempo. */
 const REPETICION_MS = 4000;
@@ -24,6 +32,7 @@ export function Scanner() {
 
   const [estado, setEstado] = useState<Estado>('iniciando');
   const [outcome, setOutcome] = useState<ScanOutcome | null>(null);
+  const [ultimoSerial, setUltimoSerial] = useState('');
   const [enCola, setEnCola] = useState(0);
   const [enLinea, setEnLinea] = useState(true);
 
@@ -55,6 +64,7 @@ export function Scanner() {
         }
 
         if (!desdeCola) {
+          setUltimoSerial(serial);
           setOutcome(result);
           setEstado('resultado');
         }
@@ -165,8 +175,12 @@ export function Scanner() {
           <h1 style={{ fontSize: '1.25rem', margin: 0 }}>Sin acceso a la cámara</h1>
           <hr className="regla-dorada" style={{ margin: '1.25rem auto' }} />
           <p className="secundario">
-            Autoriza la cámara en los ajustes del navegador y vuelve a abrir el escáner.
+            Autoriza la cámara en los ajustes del navegador. Mientras tanto puedes marcar
+            buscando por teléfono.
           </p>
+          <button type="button" className="boton" onClick={() => setEstado('pin')}>
+            Buscar por teléfono
+          </button>
         </div>
       </main>
     );
@@ -181,7 +195,14 @@ export function Scanner() {
 
       <header className="escaner-barra">
         <span>{enLinea ? 'Listo para escanear' : 'Sin conexión'}</span>
-        {enCola > 0 && <span className="escaner-pendientes">{enCola} por enviar</span>}
+        <span className="escaner-barra-derecha">
+          {enCola > 0 && <span className="escaner-pendientes">{enCola} por enviar</span>}
+          {estado === 'escaneando' && (
+            <button type="button" className="escaner-buscar" onClick={() => setEstado('buscando')}>
+              Buscar por teléfono
+            </button>
+          )}
+        </span>
       </header>
 
       {estado === 'pin' && (
@@ -194,11 +215,24 @@ export function Scanner() {
         />
       )}
 
+      {estado === 'buscando' && (
+        <Buscador
+          obtenerPin={() => pinRef.current}
+          onCerrar={() => setEstado('escaneando')}
+          onElegir={(serial) => {
+            setEstado('enviando');
+            void enviar(serial, crypto.randomUUID(), false);
+          }}
+        />
+      )}
+
       {estado === 'enviando' && <div className="escaner-overlay">Marcando…</div>}
 
       {estado === 'resultado' && outcome && (
         <Resultado
           outcome={outcome}
+          serial={ultimoSerial}
+          obtenerPin={() => pinRef.current}
           onCerrar={() => {
             setOutcome(null);
             setEstado(pinRef.current === null ? 'pin' : 'escaneando');

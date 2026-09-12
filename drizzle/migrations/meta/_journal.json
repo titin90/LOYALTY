@@ -71,6 +71,13 @@
       "when": 1789249227279,
       "tag": "0009_erasure_keeps_ledger",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1789253955924,
+      "tag": "0010_grant_verify_pin",
+      "breakpoints": true
     }
   ]
 }
