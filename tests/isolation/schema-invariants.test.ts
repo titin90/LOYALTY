@@ -114,7 +114,7 @@ describe('invariantes del esquema', () => {
     expect(rows.map((r) => r.viewname)).toEqual(['tenant_public']);
   });
 
-  it('la superficie SECURITY DEFINER expuesta son exactamente cuatro funciones', async () => {
+  it('la superficie SECURITY DEFINER expuesta es EXACTAMENTE esta lista', async () => {
     const rows = await sql<{ proname: string }[]>`
       select p.proname
       from pg_proc p
@@ -125,11 +125,19 @@ describe('invariantes del esquema', () => {
         and p.proname <> 'current_tenant_ids'
       order by p.proname
     `;
+    // Lista cerrada a propósito. Sumar una función aquí es una decisión de
+    // seguridad que alguien tiene que tomar mirando este test, no un efecto
+    // secundario de agregar una feature (CLAUDE.md regla 3).
     expect(rows.map((r) => r.proname)).toEqual([
+      // Web service de Apple: los llaman sus dispositivos, sin sesión.
+      'apple_register_device',
+      'apple_unregister_device',
+      'apple_updated_serials',
+      // Emisión de pases y flujos públicos.
+      'pass_payload',
       'record_scan',
       'redeem_reward',
       'register_customer',
-      'resolve_apple_pass',
     ]);
   });
 

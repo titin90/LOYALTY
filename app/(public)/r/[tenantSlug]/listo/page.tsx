@@ -1,6 +1,7 @@
 import { notFound, redirect } from 'next/navigation';
 import { getPublicTenant } from '@/lib/db/public-queries';
 import { readCardCookie } from '@/lib/actions/register';
+import { walletAvailability } from '@/lib/wallet/config';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,6 +20,9 @@ export default async function ListoPage({
   if (!tenant) notFound();
   if (!card) redirect(`/r/${tenantSlug}`);
 
+  const wallets = walletAvailability();
+  const ninguna = !wallets.apple && !wallets.google;
+
   return (
     <main className="pantalla">
       <div className="tarjeta" style={{ textAlign: 'center' }}>
@@ -34,16 +38,25 @@ export default async function ListoPage({
           ninguna aplicación.
         </p>
 
-        {/* Fase 1b: los botones reales necesitan el certificado de Apple y el
-            issuer account de Google, ambos en trámite. */}
         <div style={{ display: 'grid', gap: '0.6rem', marginTop: '1.5rem' }}>
-          <button className="boton" type="button" disabled>
-            Agregar a Apple Wallet
-          </button>
-          <button className="boton" type="button" disabled>
-            Agregar a Google Wallet
-          </button>
+          {wallets.apple && (
+            <a className="boton" href={`/api/wallet/apple/${card.serial}`}>
+              Agregar a Apple Wallet
+            </a>
+          )}
+          {wallets.google && (
+            <a className="boton" href={`/api/wallet/google/${card.serial}`}>
+              Agregar a Google Wallet
+            </a>
+          )}
         </div>
+
+        {ninguna && (
+          <p className="secundario" style={{ fontSize: '0.8125rem' }}>
+            La tarjeta digital estará disponible muy pronto. Mientras tanto, en el local
+            te encuentran por tu teléfono.
+          </p>
+        )}
 
         <p className="secundario" style={{ fontSize: '0.8125rem', marginBottom: 0 }}>
           Muestra tu tarjeta en el local para sumar cada visita.

@@ -113,7 +113,10 @@ h2,
 }
 
 .boton {
+  display: block;
   width: 100%;
+  text-align: center;
+  text-decoration: none;
   padding: 0.9rem 1rem;
   font: inherit;
   font-weight: 600;

@@ -21,7 +21,18 @@ Si una tarea parece exigir romper una de estas, **detente y pregunta**. No la so
    Única excepción, verificada por la suite: `tenant_members` lleva `ENABLE` sin `FORCE`, porque
    `app.current_tenant_ids()` la consulta y con `FORCE` la política se llamaría a sí misma
    (recursión infinita). Cualquier otra tabla sin `FORCE` rompe el CI.
-3. **La `service_role` key de Supabase no se usa en código de aplicación.** Salta RLS por completo. Los flujos públicos pasan solo por las cuatro funciones `SECURITY DEFINER` de firma estrecha: `register_customer`, `record_scan`, `redeem_reward`, `resolve_apple_pass`. **Agregar una quinta exige aprobación humana explícita.**
+3. **La `service_role` key de Supabase no se usa en código de aplicación.** Salta RLS por completo.
+   Los flujos sin sesión pasan solo por funciones `SECURITY DEFINER` de firma estrecha, y la lista
+   está cerrada en `tests/isolation/schema-invariants.test.ts`. **Agregar una exige aprobación
+   humana explícita**: el test falla y hay que editarlo a mano, que es justamente el punto.
+
+   Superficie actual (7): `register_customer`, `record_scan`, `redeem_reward`, `pass_payload`,
+   `apple_register_device`, `apple_unregister_device`, `apple_updated_serials`. Las tres últimas
+   existen porque los dispositivos de Apple llaman al web service sin sesión de usuario.
+
+   Antes de agregar una, agota estas salidas: ¿se puede resolver bajo RLS con una sesión de
+   usuario? ¿Se puede generalizar una función existente en vez de sumar otra? ¿Basta una vista
+   acotada a datos que ya son públicos, como `tenant_public`?
 
 > Una filtración entre tenants es una brecha notificable en 72h bajo la Ley 21.719, con multas de hasta 20.000 UTM. Estas tres reglas son el proyecto entero.
 

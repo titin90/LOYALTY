@@ -63,7 +63,15 @@ pnpm test:isolation # aislamiento entre negocios (necesita base de datos)
 | Escáner PWA con emparejamiento de equipo y PIN | ✅ |
 | Cola de marcajes sin conexión (IndexedDB) | ✅ |
 | Canje de premios | ✅ |
-| Pases de Apple/Google Wallet | ⏳ bloqueado por certificado e issuer account |
+| Emisión de pases Apple (.pkpass firmado) | ✅ |
+| Emisión de pases Google (LoyaltyObject + enlace de guardado) | ✅ |
+| Web service de Apple y push por APNs | ✅ |
+| Certificado de Apple e issuer account de Google | ⏳ trámites externos |
+
+Las wallets funcionan sin configurar: si faltan las variables de entorno, cada
+plataforma se declara no disponible y la interfaz lo dice, en vez de romperse.
+Cuando lleguen el certificado y el issuer account, solo hay que completar
+`.env` — no hay código pendiente.
 
 Probar el escáner en local:
 

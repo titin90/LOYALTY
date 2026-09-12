@@ -11,6 +11,7 @@ import { sql } from 'drizzle-orm';
 import { withUserSession } from '@/lib/db/client';
 import { rootCauseMessage, sqlState } from '@/lib/db/errors';
 import type { DeviceClaims } from '@/lib/device/token';
+import { pushCardUpdate } from '@/lib/wallet/push';
 
 export interface ScanSuccess {
   readonly customerName: string;
@@ -83,8 +84,8 @@ export async function recordScan(request: ScanRequest): Promise<ScanOutcome> {
       // Bajo RLS solo existen las tarjetas de este negocio: si no aparece, es de
       // otro local. Distinguirlo aquí evita el mensaje confuso de "PIN inválido".
       const found = (await tx.execute(
-        sql`select 1 as ok from public.cards where serial = ${serial}`,
-      )) as unknown as unknown[];
+        sql`select id from public.cards where serial = ${serial}`,
+      )) as unknown as { id: string }[];
 
       if (found.length === 0) {
         return {
@@ -106,6 +107,10 @@ export async function recordScan(request: ScanRequest): Promise<ScanOutcome> {
         return mapped
           ? { ok: false as const, ...mapped }
           : { ok: false as const, failure: 'unknown' as const, message: 'No se pudo marcar.' };
+      }
+
+      if (!row.r.duplicate) {
+        await notifyWallets(found[0]!.id, serial);
       }
 
       return {
@@ -179,6 +184,28 @@ export async function redeemReward(request: RedeemRequest): Promise<RedeemOutcom
       return { ok: false, failure: 'reward_gone', message: 'Ese premio ya no está disponible.' };
     }
     return mapped;
+  }
+}
+
+/**
+ * Avisa a las wallets del cambio, con tope de tiempo.
+ *
+ * Quien escanea no puede quedarse esperando a Apple: si el aviso tarda, el pase
+ * se pondrá al día igual la próxima vez que el teléfono consulte al web service.
+ * Un fallo aquí nunca deshace la visita, que ya está en el ledger.
+ */
+const PUSH_TIMEOUT_MS = 2000;
+
+async function notifyWallets(cardId: string, serial: string): Promise<void> {
+  try {
+    await Promise.race([
+      pushCardUpdate(cardId, serial),
+      new Promise((resolve) => setTimeout(resolve, PUSH_TIMEOUT_MS)),
+    ]);
+  } catch (error) {
+    console.error('[escaner] no se pudo avisar a las wallets', {
+      raw: rootCauseMessage(error),
+    });
   }
 }
 

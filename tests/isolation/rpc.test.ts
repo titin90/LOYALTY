@@ -237,11 +237,47 @@ describe('redeem_reward', () => {
   });
 });
 
-describe('resolve_apple_pass', () => {
-  it('devuelve null con un token inválido en vez de filtrar el pase', async () => {
+describe('pass_payload', () => {
+  it('entrega lo que necesita el pase cuando el serial existe', async () => {
+    const [row] = await asAnon((tx) => tx`select app.pass_payload(${a.cardSerial}) as r`);
+    const payload = row!.r as Record<string, unknown>;
+    expect(payload.customer_name).toBe('Cliente');
+    expect(payload.balance).toBe(0);
+  });
+
+  it('NUNCA devuelve el teléfono del cliente', async () => {
+    const [row] = await asAnon((tx) => tx`select app.pass_payload(${a.cardSerial}) as r`);
+    expect(JSON.stringify(row!.r)).not.toMatch(/\+?569\d{8}/);
+  });
+
+  it('null para un serial que no existe', async () => {
     const [row] = await asAnon(
-      (tx) => tx`select app.resolve_apple_pass('serial-inexistente', 'token-malo') as r`,
+      (tx) => tx`select app.pass_payload('00000000000000000000000000000000') as r`,
     );
+    expect(row!.r).toBeNull();
+  });
+
+  it('null para algo que no tiene forma de serial, sin consultar la base', async () => {
+    const [row] = await asAnon((tx) => tx`select app.pass_payload('../../etc/passwd') as r`);
+    expect(row!.r).toBeNull();
+  });
+
+  it('null para una tarjeta bloqueada', async () => {
+    await sql`update public.cards set status = 'blocked' where id = ${a.cardId}`;
+    const [row] = await asAnon((tx) => tx`select app.pass_payload(${a.cardSerial}) as r`);
+    expect(row!.r).toBeNull();
+  });
+
+  it('con token de Apple erróneo devuelve null en vez de filtrar el pase', async () => {
+    const [row] = await asAnon(
+      (tx) => tx`select app.pass_payload(${a.cardSerial}, 'token-malo') as r`,
+    );
+    expect(row!.r).toBeNull();
+  });
+
+  it('null para un cliente que ejerció su derecho de eliminación', async () => {
+    await sql`update public.customers set deleted_at = now() where id = ${a.customerId}`;
+    const [row] = await asAnon((tx) => tx`select app.pass_payload(${a.cardSerial}) as r`);
     expect(row!.r).toBeNull();
   });
 });

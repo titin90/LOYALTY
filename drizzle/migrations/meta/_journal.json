@@ -36,6 +36,20 @@
       "when": 1789246488479,
       "tag": "0004_fix_pin_lockout",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1789247704707,
+      "tag": "0005_pass_payload",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1789247794134,
+      "tag": "0006_apple_web_service",
+      "breakpoints": true
     }
   ]
 }
