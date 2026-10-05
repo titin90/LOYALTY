@@ -19,7 +19,7 @@ const ev = (delta: number, kind: PointEvent['kind'], iso = '2026-01-01T00:00:00Z
 
 const reward = (id: string, threshold: number, active = true): Reward => ({
   id,
-  name: `Premio ${id}`,
+  name: `Reward ${id}`,
   threshold,
   active,
 });

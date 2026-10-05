@@ -18,10 +18,10 @@ interface Cubeta {
 const cubetas = new Map<string, Cubeta>();
 const MAX_CLAVES = 10_000;
 
-export interface LimiteResultado {
-  readonly permitido: boolean;
-  readonly restantes: number;
-  readonly reiniciaEnSegundos: number;
+export interface RateLimitResult {
+  readonly allowed: boolean;
+  readonly remaining: number;
+  readonly retryAfterSeconds: number;
 }
 
 export function consumir(
@@ -29,7 +29,7 @@ export function consumir(
   maximo: number,
   ventanaSegundos: number,
   ahora: number = Date.now(),
-): LimiteResultado {
+): RateLimitResult {
   // Purga perezosa: sin esto la tabla crece sin techo con IPs de un solo uso.
   if (cubetas.size > MAX_CLAVES) {
     for (const [k, v] of cubetas) {
@@ -42,20 +42,20 @@ export function consumir(
 
   if (!actual || actual.reiniciaEn <= ahora) {
     cubetas.set(clave, { cuenta: 1, reiniciaEn: ahora + ventanaSegundos * 1000 });
-    return { permitido: true, restantes: maximo - 1, reiniciaEnSegundos: ventanaSegundos };
+    return { allowed: true, remaining: maximo - 1, retryAfterSeconds: ventanaSegundos };
   }
 
   actual.cuenta += 1;
 
   return {
-    permitido: actual.cuenta <= maximo,
-    restantes: Math.max(maximo - actual.cuenta, 0),
-    reiniciaEnSegundos: Math.ceil((actual.reiniciaEn - ahora) / 1000),
+    allowed: actual.cuenta <= maximo,
+    remaining: Math.max(maximo - actual.cuenta, 0),
+    retryAfterSeconds: Math.ceil((actual.reiniciaEn - ahora) / 1000),
   };
 }
 
 /** Solo para tests. */
-export function reiniciarLimites(): void {
+export function resetRateLimits(): void {
   cubetas.clear();
 }
 
@@ -63,7 +63,7 @@ export function reiniciarLimites(): void {
  * IP del cliente. Detrás de un proxy, `x-forwarded-for` es la única fuente, y
  * se toma la PRIMERA entrada: las siguientes las puede escribir quien llama.
  */
-export function ipDe(headers: Headers): string {
+export function clientIp(headers: Headers): string {
   const reenviada = headers.get('x-forwarded-for');
   if (reenviada) {
     const primera = reenviada.split(',')[0]?.trim();

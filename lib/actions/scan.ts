@@ -5,10 +5,10 @@ import { verifyDeviceToken, deviceSecret, type DeviceClaims } from '@/lib/device
 import {
   recordScan,
   redeemReward,
-  buscarPorTelefono,
+  findCustomersByPhone,
   type ScanOutcome,
   type RedeemOutcome,
-  type ClienteEncontrado,
+  type FoundCustomer,
 } from '@/lib/scanning';
 
 const DEVICE_COOKIE = 'device_token';
@@ -47,11 +47,11 @@ export async function submitRedeem(
   return redeemReward({ serial, rewardId, pin, claims, idempotencyKey });
 }
 
-export async function buscarCliente(
+export async function searchCustomers(
   consulta: string,
   pin: string,
-): Promise<ClienteEncontrado[]> {
+): Promise<FoundCustomer[]> {
   const claims = await currentDevice();
   if (!claims) return [];
-  return buscarPorTelefono(claims, consulta, pin);
+  return findCustomersByPhone(claims, consulta, pin);
 }

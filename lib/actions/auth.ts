@@ -26,7 +26,7 @@ export async function currentSession(): Promise<MemberSession | null> {
 /** Sesión obligatoria: redirige a la entrada si no hay. */
 export async function requireSession(): Promise<MemberSession> {
   const session = await currentSession();
-  if (!session) redirect('/entrar');
+  if (!session) redirect('/login');
   return session;
 }
 
@@ -51,10 +51,10 @@ export async function login(_previous: LoginState, formData: FormData): Promise<
     maxAge: SESSION_TTL_SECONDS,
   });
 
-  redirect(`/panel/${outcome.session.tenantSlug}`);
+  redirect(`/dashboard/${outcome.session.tenantSlug}`);
 }
 
 export async function logout(): Promise<void> {
   (await cookies()).delete(SESSION_COOKIE);
-  redirect('/entrar');
+  redirect('/login');
 }

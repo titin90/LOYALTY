@@ -10,7 +10,7 @@ export default async function ScanPage() {
     return (
       <main className="pantalla">
         <div className="tarjeta" style={{ textAlign: 'center' }}>
-          <h1 style={{ fontSize: '1.3rem', margin: 0 }}>Equipo sin emparejar</h1>
+          <h1 style={{ fontSize: '1.3rem', margin: 0 }}>Device sin emparejar</h1>
           <hr className="regla-dorada" style={{ margin: '1.25rem auto' }} />
           <p className="secundario">
             Pide el enlace de emparejamiento y ábrelo en este mismo teléfono.

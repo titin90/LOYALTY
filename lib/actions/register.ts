@@ -43,7 +43,7 @@ export async function registerCustomer(
     maxAge: 60 * 60, // una hora: solo para completar la entrega de la tarjeta
   });
 
-  redirect(`/r/${slug}/listo`);
+  redirect(`/join/${slug}/done`);
 }
 
 export async function readCardCookie(tenantSlug: string): Promise<{ serial: string } | null> {

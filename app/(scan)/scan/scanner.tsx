@@ -3,11 +3,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { extractSerial } from '@/lib/domain/serial';
 import { submitScan } from '@/lib/actions/scan';
-import { enqueue, dequeue, pending } from '@/lib/offline-queue';
+import { enqueue, dequeue, pending } from '@/lib/scanner/offline-queue';
 import type { ScanOutcome } from '@/lib/scanning';
 import { PinPad } from './pin-pad';
-import { Buscador } from './buscador';
-import { Resultado } from './resultado';
+import { Buscador } from './search';
+import { Resultado } from './result';
 
 type Estado =
   | 'iniciando'

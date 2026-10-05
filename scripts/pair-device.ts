@@ -51,5 +51,5 @@ const token = issueToken(
 const base = process.env.APP_URL ?? 'http://localhost:3000';
 console.log(`\nEquipo "${nombre}" creado para ${slug}.`);
 console.log(`Abre este enlace EN EL TELÉFONO DEL LOCAL (vence en ${PAIR_TOKEN_TTL_SECONDS / 60} minutos):\n`);
-console.log(`  ${base}/emparejar?t=${token}\n`);
+console.log(`  ${base}/pair?t=${token}\n`);
 process.exit(0);

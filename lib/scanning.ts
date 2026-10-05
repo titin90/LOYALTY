@@ -13,10 +13,10 @@ import { rootCauseMessage, sqlState } from '@/lib/db/errors';
 import type { DeviceClaims } from '@/lib/device/token';
 import { pushCardUpdate } from '@/lib/wallet/push';
 
-export interface PremioCanjeable {
+export interface RedeemableReward {
   readonly id: string;
-  readonly nombre: string;
-  readonly umbral: number;
+  readonly name: string;
+  readonly threshold: number;
 }
 
 export interface ScanSuccess {
@@ -29,7 +29,7 @@ export interface ScanSuccess {
    * marcaje porque el momento de canjear es justo este: el cliente está en el
    * mostrador. Obligar a buscarlo en otra pantalla es como no tenerlo.
    */
-  readonly redeemable: readonly PremioCanjeable[];
+  readonly redeemable: readonly RedeemableReward[];
   /** El evento ya existía: la cola sin conexión reenvió el mismo marcaje. */
   readonly duplicate: boolean;
 }
@@ -139,7 +139,7 @@ export async function recordScan(request: ScanRequest): Promise<ScanOutcome> {
           earned: row.r.earned ?? 0,
           balance: row.r.balance,
           pointsToNextReward: row.r.points_to_next_reward,
-          redeemable: premios.map((p) => ({ id: p.id, nombre: p.name, umbral: p.threshold })),
+          redeemable: premios.map((p) => ({ id: p.id, name: p.name, threshold: p.threshold })),
           duplicate: row.r.duplicate,
         },
       };
@@ -229,12 +229,12 @@ async function notifyWallets(cardId: string, serial: string): Promise<void> {
   }
 }
 
-export interface ClienteEncontrado {
+export interface FoundCustomer {
   readonly serial: string;
-  readonly nombre: string;
-  readonly saldo: number;
+  readonly name: string;
+  readonly balance: number;
   /** Últimos dígitos, para distinguir homónimos sin mostrar el número entero. */
-  readonly telefonoParcial: string;
+  readonly phoneSuffix: string;
 }
 
 /**
@@ -249,11 +249,11 @@ export interface ClienteEncontrado {
  * Además se exigen al menos 4 dígitos, se devuelven como mucho 5 resultados y
  * nunca el número completo — solo lo justo para distinguir a dos homónimos.
  */
-export async function buscarPorTelefono(
+export async function findCustomersByPhone(
   claims: DeviceClaims,
   consulta: string,
   pin: string,
-): Promise<ClienteEncontrado[]> {
+): Promise<FoundCustomer[]> {
   const digitos = consulta.replace(/\D/g, '');
   if (digitos.length < 4) return [];
   if (!/^\d{4,8}$/.test(pin)) return [];
@@ -285,9 +285,9 @@ export async function buscarPorTelefono(
 
       return filas.map((f) => ({
         serial: f.serial,
-        nombre: f.name,
-        saldo: f.points_balance,
-        telefonoParcial: `··· ${f.phone_e164.slice(-4)}`,
+        name: f.name,
+        balance: f.points_balance,
+        phoneSuffix: `··· ${f.phone_e164.slice(-4)}`,
       }));
     });
   } catch (error) {

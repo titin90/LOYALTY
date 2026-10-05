@@ -7,14 +7,14 @@
  * endpoints públicos.
  */
 import { NextResponse, type NextRequest } from 'next/server';
-import { consumir, ipDe } from '@/lib/security/rate-limit';
+import { consumir, clientIp } from '@/lib/security/rate-limit';
 import { securityHeaders, type Entorno } from '@/lib/security/headers';
 
 const LIMITES: { patron: RegExp; maximo: number; ventana: number }[] = [
   // El registro crea filas: es lo más caro que puede disparar un anónimo.
   { patron: /^\/r\//, maximo: 20, ventana: 60 },
   // Iniciar sesión cuesta un bcrypt por intento.
-  { patron: /^\/entrar/, maximo: 15, ventana: 60 },
+  { patron: /^\/login/, maximo: 15, ventana: 60 },
   // Emitir un pase firma criptografía.
   { patron: /^\/api\/wallet\//, maximo: 30, ventana: 60 },
   // El web service de Apple: generoso, lo llaman los dispositivos.
@@ -26,13 +26,13 @@ export function middleware(request: NextRequest): NextResponse {
   const limite = LIMITES.find((l) => l.patron.test(ruta));
 
   if (limite) {
-    const resultado = consumir(`${ipDe(request.headers)}:${limite.patron.source}`, limite.maximo, limite.ventana);
+    const resultado = consumir(`${clientIp(request.headers)}:${limite.patron.source}`, limite.maximo, limite.ventana);
 
-    if (!resultado.permitido) {
+    if (!resultado.allowed) {
       return new NextResponse('Demasiadas peticiones. Espera un momento.', {
         status: 429,
         headers: {
-          'retry-after': String(resultado.reiniciaEnSegundos),
+          'retry-after': String(resultado.retryAfterSeconds),
           'content-type': 'text/plain; charset=utf-8',
         },
       });

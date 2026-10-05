@@ -31,7 +31,7 @@ describe('securityHeaders', () => {
   it('la cámara solo se permite en el escáner', () => {
     expect(securityHeaders('/scan', 'production')['permissions-policy']).toContain('camera=(self)');
     expect(securityHeaders('/', 'production')['permissions-policy']).toContain('camera=()');
-    expect(securityHeaders('/panel/x', 'production')['permissions-policy']).toContain('camera=()');
+    expect(securityHeaders('/dashboard/x', 'production')['permissions-policy']).toContain('camera=()');
   });
 
   it('HSTS solo en producción: en local el navegador lo recordaría dos años', () => {

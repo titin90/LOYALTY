@@ -3,7 +3,7 @@
  * empleado, antifraude, idempotencia de la cola sin conexión y canje.
  */
 import { describe, it, expect, beforeEach } from 'vitest';
-import { recordScan, redeemReward, buscarPorTelefono } from '@/lib/scanning';
+import { recordScan, redeemReward, findCustomersByPhone } from '@/lib/scanning';
 import type { DeviceClaims } from '@/lib/device/token';
 import { sql, seedTwoTenants, type SeededTenant } from '../isolation/helpers';
 
@@ -196,7 +196,7 @@ describe('canje desde el escáner', () => {
     if (!outcome.ok) return;
     expect(outcome.result.balance).toBe(5);
     expect(outcome.result.redeemable).toHaveLength(1);
-    expect(outcome.result.redeemable[0]).toMatchObject({ nombre: 'Corte gratis', umbral: 5 });
+    expect(outcome.result.redeemable[0]).toMatchObject({ name: 'Corte gratis', threshold: 5 });
   });
 
   it('sin puntos suficientes no ofrece nada que canjear', async () => {
@@ -272,71 +272,71 @@ describe('canje desde el escáner', () => {
 
 describe('búsqueda por teléfono', () => {
   it('encuentra por los últimos dígitos', async () => {
-    const [cliente] = await sql<{ phone_e164: string }[]>`
+    const [customer] = await sql<{ phone_e164: string }[]>`
       select phone_e164 from public.customers where id = ${a.customerId}
     `;
-    const resultados = await buscarPorTelefono(claimsFor(a), cliente!.phone_e164.slice(-5), a.staffPin);
+    const resultados = await findCustomersByPhone(claimsFor(a), customer!.phone_e164.slice(-5), a.staffPin);
 
     expect(resultados).toHaveLength(1);
-    expect(resultados[0]!.nombre).toBe('Cliente');
+    expect(resultados[0]!.name).toBe('Cliente');
     expect(resultados[0]!.serial).toBe(a.cardSerial);
   });
 
   it('NO devuelve el teléfono completo, solo los últimos dígitos', async () => {
-    const [cliente] = await sql<{ phone_e164: string }[]>`
+    const [customer] = await sql<{ phone_e164: string }[]>`
       select phone_e164 from public.customers where id = ${a.customerId}
     `;
-    const resultados = await buscarPorTelefono(claimsFor(a), cliente!.phone_e164.slice(-5), a.staffPin);
+    const resultados = await findCustomersByPhone(claimsFor(a), customer!.phone_e164.slice(-5), a.staffPin);
 
-    expect(resultados[0]!.telefonoParcial).not.toContain(cliente!.phone_e164);
-    expect(resultados[0]!.telefonoParcial).toBe(`··· ${cliente!.phone_e164.slice(-4)}`);
+    expect(resultados[0]!.phoneSuffix).not.toContain(customer!.phone_e164);
+    expect(resultados[0]!.phoneSuffix).toBe(`··· ${customer!.phone_e164.slice(-4)}`);
   });
 
   it.each(['', '1', '123'])('con %j dígitos no busca nada: evita pasearse por la lista', async (q) => {
-    expect(await buscarPorTelefono(claimsFor(a), q, a.staffPin)).toEqual([]);
+    expect(await findCustomersByPhone(claimsFor(a), q, a.staffPin)).toEqual([]);
   });
 
   it('SIN PIN válido no devuelve nada, aunque el dispositivo esté emparejado', async () => {
-    const [cliente] = await sql<{ phone_e164: string }[]>`
+    const [customer] = await sql<{ phone_e164: string }[]>`
       select phone_e164 from public.customers where id = ${a.customerId}
     `;
-    const consulta = cliente!.phone_e164.slice(-5);
+    const consulta = customer!.phone_e164.slice(-5);
 
     // Con el PIN correcto sí aparece: la diferencia es exactamente el PIN.
-    expect(await buscarPorTelefono(claimsFor(a), consulta, a.staffPin)).toHaveLength(1);
-    expect(await buscarPorTelefono(claimsFor(a), consulta, '0000')).toEqual([]);
-    expect(await buscarPorTelefono(claimsFor(a), consulta, 'no-es-pin')).toEqual([]);
+    expect(await findCustomersByPhone(claimsFor(a), consulta, a.staffPin)).toHaveLength(1);
+    expect(await findCustomersByPhone(claimsFor(a), consulta, '0000')).toEqual([]);
+    expect(await findCustomersByPhone(claimsFor(a), consulta, 'no-es-pin')).toEqual([]);
   });
 
   it('el PIN de otro negocio no sirve para buscar aquí', async () => {
-    const [cliente] = await sql<{ phone_e164: string }[]>`
+    const [customer] = await sql<{ phone_e164: string }[]>`
       select phone_e164 from public.customers where id = ${a.customerId}
     `;
     expect(
-      await buscarPorTelefono(claimsFor(a), cliente!.phone_e164.slice(-5), b.staffPin),
+      await findCustomersByPhone(claimsFor(a), customer!.phone_e164.slice(-5), b.staffPin),
     ).toEqual([]);
   });
 
   it('nunca encuentra clientes de otro negocio', async () => {
-    const [cliente] = await sql<{ phone_e164: string }[]>`
+    const [customer] = await sql<{ phone_e164: string }[]>`
       select phone_e164 from public.customers where id = ${b.customerId}
     `;
-    expect(await buscarPorTelefono(claimsFor(a), cliente!.phone_e164.slice(-5), a.staffPin)).toEqual([]);
+    expect(await findCustomersByPhone(claimsFor(a), customer!.phone_e164.slice(-5), a.staffPin)).toEqual([]);
   });
 
   it('no muestra clientes suprimidos', async () => {
-    const [cliente] = await sql<{ phone_e164: string }[]>`
+    const [customer] = await sql<{ phone_e164: string }[]>`
       select phone_e164 from public.customers where id = ${a.customerId}
     `;
     await sql`update public.customers set deleted_at = now() where id = ${a.customerId}`;
-    expect(await buscarPorTelefono(claimsFor(a), cliente!.phone_e164.slice(-5), a.staffPin)).toEqual([]);
+    expect(await findCustomersByPhone(claimsFor(a), customer!.phone_e164.slice(-5), a.staffPin)).toEqual([]);
   });
 
   it('el serial encontrado sirve para marcar la visita', async () => {
-    const [cliente] = await sql<{ phone_e164: string }[]>`
+    const [customer] = await sql<{ phone_e164: string }[]>`
       select phone_e164 from public.customers where id = ${a.customerId}
     `;
-    const [encontrado] = await buscarPorTelefono(claimsFor(a), cliente!.phone_e164.slice(-5), a.staffPin);
+    const [encontrado] = await findCustomersByPhone(claimsFor(a), customer!.phone_e164.slice(-5), a.staffPin);
 
     const outcome = await recordScan({
       serial: encontrado!.serial,

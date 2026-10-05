@@ -219,7 +219,7 @@ for (const plantilla of NEGOCIOS) {
 
 console.log('\nListo. Entra al panel con cualquiera de estos:\n');
 for (const n of NEGOCIOS) {
-  console.log(`  ${n.correo.padEnd(20)} ${CLAVE_DEMO}   →  /panel/${n.slug}   (PIN del local: ${n.pin})`);
+  console.log(`  ${n.correo.padEnd(20)} ${CLAVE_DEMO}   →  /dashboard/${n.slug}   (PIN del local: ${n.pin})`);
 }
 console.log('');
 process.exit(0);

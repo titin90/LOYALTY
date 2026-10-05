@@ -8,7 +8,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { CONSENT_TEXT, CONSENT_VERSION } from '@/lib/consent';
-import { DSR_PLAZO_DIAS } from '@/lib/panel/dsr';
+import { DSR_DEADLINE_DAYS } from '@/lib/dashboard/dsr';
 
 const leer = (ruta: string) => readFileSync(new URL(`../../${ruta}`, import.meta.url), 'utf8');
 
@@ -45,7 +45,7 @@ describe('registro de tratamiento', () => {
   const registro = leer('compliance/registro-de-tratamiento.md');
 
   it('el plazo de respuesta coincide con el que aplica el código', () => {
-    expect(registro).toContain(`**${DSR_PLAZO_DIAS} días**`);
+    expect(registro).toContain(`**${DSR_DEADLINE_DAYS} días**`);
   });
 
   it('declara los datos que realmente se recogen, y solo esos', () => {

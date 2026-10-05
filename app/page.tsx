@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
  *  - El dueño del negocio, que necesita el panel.
  *  - El encargado del local, cuyo equipo se empareja DESDE el panel.
  *  - El cliente, que en realidad nunca llega a esta página: entra por el enlace
- *    de su negocio, `/r/[negocio]`.
+ *    de su negocio, `/join/[negocio]`.
  *
  * En desarrollo lista los negocios sembrados, para poder entrar de un clic.
  * Esa lista no se muestra en producción.
@@ -37,7 +37,7 @@ export default async function Inicio() {
         </p>
 
         <div style={{ display: 'grid', gap: '0.6rem', marginTop: '1.5rem' }}>
-          <Link className="boton" href="/entrar">
+          <Link className="boton" href="/login">
             Entrar al panel
           </Link>
         </div>
@@ -65,9 +65,9 @@ export default async function Inicio() {
                   <li key={n.slug} style={{ fontSize: '0.875rem' }}>
                     <strong>{n.name}</strong>
                     <br />
-                    <Link href={`/r/${n.slug}`}>registro del cliente</Link>
+                    <Link href={`/join/${n.slug}`}>registro del cliente</Link>
                     {' · '}
-                    <Link href={`/panel/${n.slug}`}>panel</Link>
+                    <Link href={`/dashboard/${n.slug}`}>panel</Link>
                   </li>
                 ))}
               </ul>
