@@ -1,11 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { submitRedeem } from '@/lib/actions/scan';
 import type { ScanOutcome, RedeemableReward } from '@/lib/scanning';
 
 /** Cuánto se muestra el resultado antes de volver a la cámara sola. */
 const AUTOCIERRE_MS = 3500;
+
+// Menor que REPETICION_MS del escáner: si se cerrara antes de que expire la
+// ventana de relectura, el mismo QR frente al lente dispararía "ya sumó hace
+// poco" justo después de un éxito.
 
 export function Resultado({
   outcome,
@@ -21,6 +25,23 @@ export function Resultado({
   onCerrar: () => void;
 }) {
   const [canjeando, setCanjeando] = useState<string | null>(null);
+
+  /**
+   * Una clave por tarjeta y premio, estable entre reintentos.
+   *
+   * Generarla dentro del manejador producía una distinta en cada toque: si la
+   * respuesta se perdía con el INSERT ya hecho, el reintento pasaba el filtro de
+   * idempotencia y el cliente se llevaba dos premios con el saldo descontado dos
+   * veces.
+   */
+  const claveCanje = useRef(new Map<string, string>());
+  const claveDe = (rewardId: string) => {
+    const previa = claveCanje.current.get(rewardId);
+    if (previa) return previa;
+    const nueva = crypto.randomUUID();
+    claveCanje.current.set(rewardId, nueva);
+    return nueva;
+  };
   const [canjeado, setCanjeado] = useState<string | null>(null);
   const [errorCanje, setErrorCanje] = useState<string | null>(null);
 
@@ -43,14 +64,14 @@ export function Resultado({
     setErrorCanje(null);
 
     try {
-      const resultado = await submitRedeem(serial, reward.id, pin, crypto.randomUUID());
+      const resultado = await submitRedeem(serial, reward.id, pin, claveDe(reward.id));
       if (resultado.ok) {
         setCanjeado(reward.name);
       } else {
         setErrorCanje(resultado.message);
       }
     } catch {
-      setErrorCanje('Sin conexión. El canje no se registró: vuelve a intentarlo.');
+      setErrorCanje('No se pudo confirmar. Vuelve a tocar el premio: no se cobrará dos veces.');
     } finally {
       setCanjeando(null);
     }
@@ -59,7 +80,7 @@ export function Resultado({
   if (!outcome.ok) {
     return (
       <div className="scan-sheet scan-sheet--solid">
-        <p className="scan-title" style={{ color: 'var(--error)' }}>
+        <p className="scan-title" style={{ color: 'var(--alert)' }}>
           {outcome.message}
         </p>
         <button type="button" className="scan-btn" onClick={onCerrar}>
@@ -78,7 +99,7 @@ export function Resultado({
           Canje registrado
         </p>
         <p className="scan-title">{canjeado}</p>
-        <p className="soft">Entrégale su reward a {customerName}.</p>
+        <p className="soft">Entrégale su premio a {customerName}.</p>
         <button type="button" className="scan-btn" onClick={onCerrar}>
           Listo
         </button>
@@ -87,7 +108,15 @@ export function Resultado({
   }
 
   return (
-    <div className="scan-sheet scan-sheet--solid">
+    <div
+      className="scan-sheet scan-sheet--solid"
+      onClick={redeemable.length === 0 ? onCerrar : undefined}
+      role={redeemable.length === 0 ? 'button' : undefined}
+      tabIndex={redeemable.length === 0 ? 0 : undefined}
+      onKeyDown={(e) => {
+        if (redeemable.length === 0 && (e.key === 'Enter' || e.key === ' ')) onCerrar();
+      }}
+    >
       <p className="soft" style={{ margin: 0 }}>
         {duplicate ? 'Ya estaba marcada' : '¡Visita marcada!'}
       </p>

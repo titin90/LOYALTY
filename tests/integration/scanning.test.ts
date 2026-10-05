@@ -425,3 +425,65 @@ describe('solicitud de reseña de Google', () => {
     expect((await passPayload(a.cardSerial))?.review_url).toBeNull();
   });
 });
+
+describe('la búsqueda respeta las defensas del equipo', () => {
+  const phoneOf = async () => {
+    const [row] = await sql<{ phone_e164: string }[]>`
+      select phone_e164 from public.customers where id = ${a.customerId}
+    `;
+    return row!.phone_e164.slice(-5);
+  };
+
+  it('un equipo revocado deja de leer la base de clientes', async () => {
+    const q = await phoneOf();
+    expect(await findCustomersByPhone(claimsFor(a), q, a.staffPin)).toHaveLength(1);
+
+    await sql`update public.devices set revoked_at = now() where id = ${a.deviceId}`;
+    expect(await findCustomersByPhone(claimsFor(a), q, a.staffPin)).toEqual([]);
+  });
+
+  it('un equipo bloqueado por PIN tampoco busca', async () => {
+    const q = await phoneOf();
+    await sql`update public.devices set locked_until = now() + interval '15 minutes'
+              where id = ${a.deviceId}`;
+    expect(await findCustomersByPhone(claimsFor(a), q, a.staffPin)).toEqual([]);
+  });
+
+  it('un PIN errado INCREMENTA el contador: la búsqueda no es un oráculo libre', async () => {
+    const q = await phoneOf();
+    await findCustomersByPhone(claimsFor(a), q, '0000');
+
+    const [device] = await sql<{ failed_pin_attempts: number }[]>`
+      select failed_pin_attempts from public.devices where id = ${a.deviceId}
+    `;
+    expect(device!.failed_pin_attempts).toBe(1);
+  });
+
+  it('tras 10 intentos por la búsqueda, el equipo queda bloqueado', async () => {
+    const q = await phoneOf();
+    for (let i = 0; i < 10; i += 1) {
+      await findCustomersByPhone(claimsFor(a), q, '0000');
+    }
+    // Con el PIN correcto tampoco: el bloqueo es del equipo.
+    expect(await findCustomersByPhone(claimsFor(a), q, a.staffPin)).toEqual([]);
+
+    const outcome = await recordScan({
+      serial: a.cardSerial,
+      pin: a.staffPin,
+      claims: claimsFor(a),
+      idempotencyKey: key(),
+    });
+    expect(outcome).toMatchObject({ ok: false, failure: 'locked' });
+  });
+
+  it('un PIN correcto limpia el contador', async () => {
+    const q = await phoneOf();
+    await findCustomersByPhone(claimsFor(a), q, '0000');
+    await findCustomersByPhone(claimsFor(a), q, a.staffPin);
+
+    const [device] = await sql<{ failed_pin_attempts: number }[]>`
+      select failed_pin_attempts from public.devices where id = ${a.deviceId}
+    `;
+    expect(device!.failed_pin_attempts).toBe(0);
+  });
+});

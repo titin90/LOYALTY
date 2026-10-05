@@ -7,23 +7,13 @@
  * endpoints públicos.
  */
 import { NextResponse, type NextRequest } from 'next/server';
-import { consumir, clientIp } from '@/lib/security/rate-limit';
+import { consumir, clientIp, limitFor } from '@/lib/security/rate-limit';
 import { securityHeaders, type Entorno } from '@/lib/security/headers';
 
-const LIMITES: { patron: RegExp; maximo: number; ventana: number }[] = [
-  // El registro crea filas: es lo más caro que puede disparar un anónimo.
-  { patron: /^\/r\//, maximo: 20, ventana: 60 },
-  // Iniciar sesión cuesta un bcrypt por intento.
-  { patron: /^\/login/, maximo: 15, ventana: 60 },
-  // Emitir un pase firma criptografía.
-  { patron: /^\/api\/wallet\//, maximo: 30, ventana: 60 },
-  // El web service de Apple: generoso, lo llaman los dispositivos.
-  { patron: /^\/api\/v1\//, maximo: 120, ventana: 60 },
-];
 
 export function middleware(request: NextRequest): NextResponse {
   const ruta = request.nextUrl.pathname;
-  const limite = LIMITES.find((l) => l.patron.test(ruta));
+  const limite = limitFor(ruta);
 
   if (limite) {
     const resultado = consumir(`${clientIp(request.headers)}:${limite.patron.source}`, limite.maximo, limite.ventana);

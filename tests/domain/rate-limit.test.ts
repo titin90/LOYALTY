@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { consumir, resetRateLimits, clientIp } from '@/lib/security/rate-limit';
+import { consumir, resetRateLimits, clientIp, limitFor } from '@/lib/security/rate-limit';
 
 const AHORA = 1_800_000_000_000;
 
@@ -54,5 +54,30 @@ describe('clientIp', () => {
 
   it('devuelve un valor estable si no hay ninguna', () => {
     expect(clientIp(new Headers())).toBe('desconocida');
+  });
+});
+
+describe('qué rutas están protegidas', () => {
+  /**
+   * Los tests anteriores probaban la cubeta, nunca los PATRONES. Por eso el
+   * renombrado de /r/ a /join/ dejó el registro sin límite alguno y nada falló:
+   * el flujo más caro que puede disparar un anónimo quedó abierto.
+   */
+  it.each([
+    ['/join/barberia-don-luis', 'registro del cliente'],
+    ['/login', 'entrada al panel'],
+    ['/scan', 'escáner del local'],
+    ['/api/wallet/apple/' + 'a'.repeat(32), 'emisión del pase'],
+    ['/api/v1/log', 'web service de Apple'],
+  ])('%s está protegida (%s)', (ruta) => {
+    expect(limitFor(ruta), `${ruta} quedó sin límite`).toBeDefined();
+  });
+
+  it('el registro tiene el tope más estricto: crea filas y firma criptografía', () => {
+    expect(limitFor('/join/x')!.maximo).toBeLessThanOrEqual(30);
+  });
+
+  it('el panel no está limitado: lo usa el dueño autenticado todo el día', () => {
+    expect(limitFor('/dashboard/x/customers')).toBeUndefined();
   });
 });

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { extractSerial } from '@/lib/domain/serial';
 import { submitScan } from '@/lib/actions/scan';
-import { enqueue, dequeue, pending } from '@/lib/scanner/offline-queue';
+import { enqueue, dequeue, pending, shouldRetry } from '@/lib/scanner/offline-queue';
 import type { ScanOutcome } from '@/lib/scanning';
 import { PinPad } from './pin-pad';
 import { Buscador } from './search';
@@ -19,7 +19,7 @@ type Estado =
   | 'resultado';
 
 /** El mismo código no se vuelve a leer durante este tiempo. */
-const REPETICION_MS = 4000;
+const REPETICION_MS = 5000;
 
 export function Scanner() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -59,7 +59,9 @@ export function Scanner() {
         if (!result.ok && (result.failure === 'bad_pin' || result.failure === 'locked')) {
           pinRef.current = null;
         }
-        if (result.ok || result.failure !== 'unknown') {
+        // Un PIN errado o un equipo revocado no invalidan la visita: la fila se
+        // conserva para reintentarla cuando el PIN sea correcto.
+        if (result.ok || !shouldRetry(result.failure)) {
           await dequeue(idempotencyKey).catch(() => {});
         }
 
@@ -133,7 +135,14 @@ export function Scanner() {
     actualizar();
     window.addEventListener('online', actualizar);
     window.addEventListener('offline', actualizar);
+
+    // El fallo típico del mostrador no es "sin señal" sino wifi conectado sin
+    // salida o portal cautivo: ahí `navigator.onLine` es true y el evento
+    // `online` nunca llega, así que la cola se quedaba quieta para siempre.
+    const timer = window.setInterval(() => void vaciarCola(), 30_000);
+
     return () => {
+      window.clearInterval(timer);
       window.removeEventListener('online', actualizar);
       window.removeEventListener('offline', actualizar);
     };

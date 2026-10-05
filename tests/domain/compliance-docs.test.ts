@@ -57,10 +57,14 @@ describe('registro de tratamiento', () => {
 describe('runbook de brecha', () => {
   const runbook = leer('compliance/runbook-brecha.md');
 
-  it('nombra las variables de entorno que hay que rotar, tal como se llaman', () => {
-    expect(runbook).toContain('SESSION_SECRET');
-    expect(runbook).toContain('DEVICE_TOKEN_SECRET');
-  });
+  it.each(['SESSION_SECRET', 'DEVICE_TOKEN_SECRET', 'CRON_SECRET'])(
+    'nombra %s entre lo que hay que rotar',
+    (variable) => {
+      // CRON_SECRET faltaba: filtrarlo habilita la purga por retención, que
+      // borra datos de forma irreversible en cualquier negocio.
+      expect(runbook).toContain(variable);
+    },
+  );
 
   it('fija el plazo legal de 72 horas', () => {
     expect(runbook).toContain('72 horas');

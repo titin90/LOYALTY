@@ -43,7 +43,7 @@ export async function createReward(_previous: DashboardState, formData: FormData
     ),
   );
 
-  revalidatePath(`/dashboard/${session.tenantSlug}/listRewards`);
+  revalidatePath(`/dashboard/${session.tenantSlug}/rewards`);
   return { status: 'ok', message: 'Reward creado.' };
 }
 
@@ -56,7 +56,7 @@ export async function toggleReward(formData: FormData): Promise<void> {
     tx.execute(sql`update rewards set active = not active where id = ${id}::uuid`),
   );
 
-  revalidatePath(`/dashboard/${session.tenantSlug}/listRewards`);
+  revalidatePath(`/dashboard/${session.tenantSlug}/rewards`);
 }
 
 export async function saveCardDesign(_previous: DashboardState, formData: FormData): Promise<DashboardState> {
@@ -86,7 +86,7 @@ export async function saveCardDesign(_previous: DashboardState, formData: FormDa
     ),
   );
 
-  revalidatePath(`/dashboard/${session.tenantSlug}/tarjeta`);
+  revalidatePath(`/dashboard/${session.tenantSlug}/card`);
   return { status: 'ok', message: 'Diseño publicado. Las tarjetas se actualizarán solas.' };
 }
 
@@ -111,7 +111,7 @@ export async function createDevice(_previous: DashboardState, formData: FormData
     deviceSecret(),
   );
 
-  revalidatePath(`/dashboard/${session.tenantSlug}/listDevices`);
+  revalidatePath(`/dashboard/${session.tenantSlug}/devices`);
   return {
     status: 'ok',
     message: `${appUrl()}/pair?t=${token}`,
@@ -127,7 +127,7 @@ export async function revokeDevice(formData: FormData): Promise<void> {
     tx.execute(sql`update devices set revoked_at = now() where id = ${id}::uuid`),
   );
 
-  revalidatePath(`/dashboard/${session.tenantSlug}/listDevices`);
+  revalidatePath(`/dashboard/${session.tenantSlug}/devices`);
 }
 
 const settingsSchema = z.object({
@@ -180,7 +180,8 @@ export async function saveSettings(
             risk_multiplier = ${v.riskMultiplier},
             review_prompt_min_visits = ${v.reviewPromptMinVisits},
             review_prompt_cooldown_days = ${v.reviewPromptCooldownDays},
-            google_review_url = ${v.googleReviewUrl}`,
+            google_review_url = ${v.googleReviewUrl}
+          where tenant_id = ${session.tenantId}::uuid`,
     ),
   );
 
@@ -214,8 +215,8 @@ export async function eraseCustomerAction(
 
   if (!resultado.ok) return { status: 'error', message: 'No se encontró ese cliente.' };
 
-  revalidatePath(`/dashboard/${session.tenantSlug}/clientes`);
-  redirect(`/dashboard/${session.tenantSlug}/clientes?suprimido=1`);
+  revalidatePath(`/dashboard/${session.tenantSlug}/customers`);
+  redirect(`/dashboard/${session.tenantSlug}/customers?suprimido=1`);
 }
 
 export async function recordPrivacyRequestAction(formData: FormData): Promise<void> {
@@ -230,7 +231,7 @@ export async function recordPrivacyRequestAction(formData: FormData): Promise<vo
   const { recordPrivacyRequest } = await import('@/lib/dashboard/dsr');
   await recordPrivacyRequest(session.userId, session.tenantId, customerId, tipo as (typeof tipos)[number]);
 
-  revalidatePath(`/dashboard/${session.tenantSlug}/listPrivacyRequests`);
+  revalidatePath(`/dashboard/${session.tenantSlug}/privacy-requests`);
 }
 
 export async function resolvePrivacyRequestAction(formData: FormData): Promise<void> {
@@ -241,5 +242,5 @@ export async function resolvePrivacyRequestAction(formData: FormData): Promise<v
   const { resolvePrivacyRequest } = await import('@/lib/dashboard/dsr');
   await resolvePrivacyRequest(session.userId, id);
 
-  revalidatePath(`/dashboard/${session.tenantSlug}/listPrivacyRequests`);
+  revalidatePath(`/dashboard/${session.tenantSlug}/privacy-requests`);
 }

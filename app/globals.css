@@ -677,6 +677,19 @@ table.data a:hover { border-bottom-color: var(--gold); }
    Pantalla completa, alto contraste, elementos táctiles de 56px: se usa de
    pie, con una mano, bajo la luz del local. */
 
+.scan,
+.scan-sheet {
+  /* El escáner es oscuro SIEMPRE, sin importar el tema del sistema. Sin fijar
+     estos tokens, en un teléfono en modo claro el texto secundario quedaba en
+     2,96:1 sobre el fondo negro: los puntos sumados y cuántos faltan —los dos
+     invariantes del producto— eran casi ilegibles. */
+  --text: #f5f1e8;
+  --text-soft: #c2bbac;
+  --text-faint: #9b9487;
+  --alert: #e5957f;
+  --gold: #d2ac70;
+}
+
 .scan { position: fixed; inset: 0; background: #000; overflow: hidden; }
 .scan-video { width: 100%; height: 100%; object-fit: cover; }
 

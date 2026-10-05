@@ -83,7 +83,7 @@ export default async function FichaCliente({
       </p>
 
       <div className="row-actions">
-        <a className="btn-quiet" href={`/api/dashboard/exportar/${customerId}`}>
+        <a className="btn-quiet" href={`/api/dashboard/export/${customerId}`}>
           Descargar sus datos
         </a>
 

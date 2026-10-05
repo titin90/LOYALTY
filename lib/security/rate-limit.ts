@@ -71,3 +71,35 @@ export function clientIp(headers: Headers): string {
   }
   return headers.get('x-real-ip') ?? 'desconocida';
 }
+
+export interface RouteLimit {
+  readonly patron: RegExp;
+  readonly maximo: number;
+  readonly ventana: number;
+}
+
+/**
+ * Qué rutas llevan tope por IP.
+ *
+ * Vive aquí y no en el middleware para que haya tests sobre los PATRONES. Los
+ * tests antiguos probaban solo la cubeta, así que cuando el registro se movió de
+ * `/r/` a `/join/` el patrón quedó apuntando a la ruta vieja y el flujo más caro
+ * que puede disparar un anónimo se quedó sin límite, sin que nada fallara.
+ */
+export const LIMITES: readonly RouteLimit[] = [
+  // El registro crea filas y firma criptografía: es lo más caro que puede
+  // disparar alguien sin sesión.
+  { patron: /^\/join\//, maximo: 20, ventana: 60 },
+  // El escáner: cada búsqueda y cada marcaje cuesta un bcrypt por miembro.
+  { patron: /^\/scan/, maximo: 60, ventana: 60 },
+  // Iniciar sesión cuesta un bcrypt por intento.
+  { patron: /^\/login/, maximo: 15, ventana: 60 },
+  // Emitir un pase firma criptografía.
+  { patron: /^\/api\/wallet\//, maximo: 30, ventana: 60 },
+  // El web service de Apple: generoso, lo llaman los dispositivos.
+  { patron: /^\/api\/v1\//, maximo: 120, ventana: 60 },
+];
+
+export function limitFor(ruta: string): RouteLimit | undefined {
+  return LIMITES.find((l) => l.patron.test(ruta));
+}

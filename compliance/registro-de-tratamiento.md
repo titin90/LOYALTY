@@ -49,7 +49,7 @@ en el texto de consentimiento y quedar cubierto en el contrato de encargado.
 | Registro de auditoría sin datos personales | Tabla `audit_log` |
 | Datos personales fuera de los logs | `lib/db/errors.ts` + test que falla si se filtran |
 | Cifrado en tránsito (HSTS, CSP) | `middleware.ts` |
-| Purga por retención | `scripts/retention.ts` |
+| Purga por retención | `scripts/retention.ts` y el cron semanal `/api/cron/retention` |
 | Datos reales nunca salen de producción | `CLAUDE.md`, regla 9 |
 
 ## Derechos del titular

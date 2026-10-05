@@ -179,3 +179,49 @@ describe('solicitudes ARCO', () => {
     expect(await listPrivacyRequests(b.userId)).toEqual([]);
   });
 });
+
+describe('la purga por cron exige su secreto', () => {
+  /**
+   * Es la ruta que BORRA datos de forma irreversible. No tenía ningún test, ni
+   * siquiera que se negara sin secreto.
+   */
+  const call = async (headers: Record<string, string>) => {
+    const { GET } = await import('@/app/api/cron/retention/route');
+    const { NextRequest } = await import('next/server');
+    return GET(new NextRequest('https://app.cl/api/cron/retention', { headers }));
+  };
+
+  it('sin CRON_SECRET configurado se niega a correr', async () => {
+    const previo = process.env.CRON_SECRET;
+    delete process.env.CRON_SECRET;
+    try {
+      expect((await call({ authorization: 'Bearer x' })).status).toBe(503);
+    } finally {
+      if (previo !== undefined) process.env.CRON_SECRET = previo;
+    }
+  });
+
+  it('rechaza una llamada sin el secreto correcto', async () => {
+    process.env.CRON_SECRET = 'secreto-de-prueba';
+    try {
+      expect((await call({})).status).toBe(401);
+      expect((await call({ authorization: 'Bearer equivocado' })).status).toBe(401);
+    } finally {
+      delete process.env.CRON_SECRET;
+    }
+  });
+
+  it('con el secreto correcto corre y no toca a quien está dentro de plazo', async () => {
+    process.env.CRON_SECRET = 'secreto-de-prueba';
+    try {
+      const res = await call({ authorization: 'Bearer secreto-de-prueba' });
+      expect(res.status).toBe(200);
+      expect(await res.json()).toEqual({ purged: 0 });
+
+      const filas = await sql`select 1 from public.customers where id = ${a.customerId}`;
+      expect(filas).toHaveLength(1);
+    } finally {
+      delete process.env.CRON_SECRET;
+    }
+  });
+});

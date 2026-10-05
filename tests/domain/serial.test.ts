@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { extractSerial } from '@/lib/domain/serial';
+import { shouldRetry } from '@/lib/scanner/offline-queue';
 
 const serial = 'a1b2c3d4e5f60718293a4b5c6d7e8f90';
 
@@ -36,4 +37,24 @@ describe('extractSerial', () => {
   ])('rechaza %j (%s)', (input) => {
     expect(extractSerial(input)).toBeNull();
   });
+});
+
+describe('qué marcajes se conservan en la cola', () => {
+  /**
+   * Un fracaso del PIN o del equipo no dice nada sobre la visita: la persona SÍ
+   * vino. Borrar la fila ahí perdía visitas reales en silencio.
+   */
+  it.each(['bad_pin', 'locked', 'device_revoked', 'unknown'])(
+    'con %s el marcaje se conserva para reintentarlo',
+    (failure) => {
+      expect(shouldRetry(failure)).toBe(true);
+    },
+  );
+
+  it.each(['card_not_here', 'card_blocked', 'too_soon'])(
+    'con %s el veredicto es definitivo y se descarta',
+    (failure) => {
+      expect(shouldRetry(failure)).toBe(false);
+    },
+  );
 });

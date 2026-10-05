@@ -69,7 +69,7 @@ export function Buscador({
         {buscando && <p className="soft">Buscando…</p>}
 
         {!buscando && resultados !== null && resultados.length === 0 && (
-          <p className="soft">Ningún customer con esos dígitos.</p>
+          <p className="soft">Ningún cliente con esos dígitos.</p>
         )}
 
         {!buscando &&

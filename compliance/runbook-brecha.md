@@ -18,6 +18,7 @@ Según el tipo:
 | Sospecha | Acción inmediata |
 |---|---|
 | Credenciales filtradas | Rotar `SESSION_SECRET` y `DEVICE_TOKEN_SECRET` (cierra todas las sesiones y desempareja los equipos) |
+| Secreto del cron filtrado | Rotar `CRON_SECRET`. Habilita la purga por retención, que **borra datos de forma irreversible** en cualquier negocio |
 | Clave de base de datos expuesta | Rotar la contraseña de Postgres y revocar conexiones activas |
 | Certificado de wallet expuesto | Revocar el Pass Type ID en Apple y el service account en Google |
 | Acceso indebido de un empleado de un local | Revocar sus equipos desde el panel y rotar los PIN del negocio |

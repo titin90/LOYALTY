@@ -62,8 +62,18 @@ export async function pending(): Promise<QueuedScan[]> {
   return all.sort((a, b) => a.queuedAt - b.queuedAt);
 }
 
-/** Una navegación fallida y un error del servidor se tratan distinto: solo el
- *  primero merece reintento. */
+/**
+ * ¿Este marcaje sigue pendiente, o ya no tiene sentido reintentarlo?
+ *
+ * Un fracaso del PIN o del equipo no dice nada sobre la visita: la persona SÍ
+ * vino. Borrar la fila en ese caso pierde visitas reales en silencio — el
+ * encargado teclea mal un dígito, la cola se vacía sin avisar y el contador baja
+ * a cero como si se hubieran enviado.
+ *
+ * Solo se descarta cuando el veredicto es definitivo sobre la tarjeta.
+ */
+const DEFINITIVOS = new Set(['card_not_here', 'card_blocked', 'too_soon']);
+
 export function shouldRetry(failure: string): boolean {
-  return failure === 'network' || failure === 'unknown';
+  return !DEFINITIVOS.has(failure);
 }

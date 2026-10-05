@@ -310,11 +310,11 @@ export interface FoundCustomer {
 /**
  * Respaldo cuando el cliente no trae el QR a mano.
  *
- * Exige el PIN igual que marcar una visita. La cookie del dispositivo por sí sola
- * NO alcanza: el PIN se escribe antes de llegar al escáner pero no se valida
- * hasta que ocurre un marcaje, así que sin esta comprobación cualquiera con el
- * teléfono del mostrador podía escribir cuatro dígitos cualesquiera y barrer la
- * base de clientes del local.
+ * Pasa por las MISMAS tres defensas que un marcaje: equipo no revocado, equipo
+ * no bloqueado, y PIN válido que incrementa el contador cuando falla. Verificar
+ * solo el PIN dejaba dos huecos: un equipo revocado seguía leyendo la base de
+ * clientes, y la respuesta distinguía PIN correcto de incorrecto sin bloqueo ni
+ * rastro — un oráculo de 10.000 combinaciones sobre un PIN de cuatro dígitos.
  *
  * Además se exigen al menos 4 dígitos, se devuelven como mucho 5 resultados y
  * nunca el número completo — solo lo justo para distinguir a dos homónimos.
@@ -330,28 +330,65 @@ export async function findCustomersByPhone(
 
   try {
     return await withUserSession(claims.userId, async (tx) => {
-      // El PIN se compara contra los hashes que RLS ya deja ver: los de este
-      // negocio. Sin coincidencia, la consulta no devuelve ninguna fila.
-      const filas = (await tx.execute(
+      const run = async <T>(query: ReturnType<typeof sql>): Promise<T[]> =>
+        (await tx.execute(query)) as unknown as T[];
+
+      // 1 · El equipo tiene que seguir autorizado. Verificar solo el PIN dejaba
+      //     leer la base de clientes desde un teléfono ya revocado — el caso del
+      //     empleado que se va con el equipo del mostrador.
+      const equipo = await run(
+        sql`select 1 from public.devices
+            where id = ${claims.deviceId}::uuid
+              and revoked_at is null
+              and (locked_until is null or locked_until <= now())`,
+      );
+      if (equipo.length === 0) return [];
+
+      // 2 · El PIN, contra los hashes que RLS deja ver: los de este negocio.
+      const miembro = await run(
+        sql`select 1 from public.tenant_members m
+            where m.active and m.pin_hash is not null
+              and app.verify_pin(${pin}, m.pin_hash)
+            limit 1`,
+      );
+
+      // 3 · Un PIN errado cuenta igual que en el marcaje. Sin esto la búsqueda
+      //     era un oráculo: 10.000 combinaciones, sin bloqueo y sin rastro.
+      //     Se devuelve en vez de lanzar para que el incremento se confirme —
+      //     la misma lección de la migración 0004.
+      if (miembro.length === 0) {
+        await run(
+          sql`update public.devices
+                 set failed_pin_attempts = failed_pin_attempts + 1,
+                     locked_until = case when failed_pin_attempts + 1 >= 10
+                                         then now() + interval '15 minutes'
+                                         else locked_until end
+               where id = ${claims.deviceId}::uuid`,
+        );
+        return [];
+      }
+
+      await run(
+        sql`update public.devices set failed_pin_attempts = 0, locked_until = null,
+                   last_seen_at = now()
+             where id = ${claims.deviceId}::uuid`,
+      );
+
+      const filas = await run<{
+        serial: string;
+        name: string;
+        points_balance: number;
+        phone_e164: string;
+      }>(
         sql`select k.serial, c.name, k.points_balance, c.phone_e164
             from public.customers c
             join public.cards k on k.customer_id = c.id
             where c.deleted_at is null
               and k.status = 'active'
               and c.phone_e164 like ${'%' + digitos + '%'}
-              and exists (
-                select 1 from public.tenant_members m
-                where m.active and m.pin_hash is not null
-                  and app.verify_pin(${pin}, m.pin_hash)
-              )
             order by c.name
             limit 5`,
-      )) as unknown as {
-        serial: string;
-        name: string;
-        points_balance: number;
-        phone_e164: string;
-      }[];
+      );
 
       return filas.map((f) => ({
         serial: f.serial,
