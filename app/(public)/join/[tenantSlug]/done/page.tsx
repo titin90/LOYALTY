@@ -24,41 +24,41 @@ export default async function ListoPage({
   const ninguna = !wallets.apple && !wallets.google;
 
   return (
-    <main className="pantalla">
-      <div className="tarjeta" style={{ textAlign: 'center' }}>
-        <p className="secundario" style={{ margin: 0, fontSize: '0.8125rem' }}>
+    <main className="screen">
+      <div className="sheet card-object" style={{ textAlign: 'center' }}>
+        <p className="soft" style={{ margin: 0, fontSize: '0.8125rem' }}>
           {tenant.name}
         </p>
         <h1 style={{ fontSize: '1.5rem', margin: '0.4rem 0 0' }}>Tu tarjeta está lista</h1>
 
-        <hr className="regla-dorada" style={{ margin: '1.5rem auto' }} />
+        <hr className="rule-gold" style={{ margin: '1.5rem auto' }} />
 
-        <p className="secundario">
+        <p className="soft">
           Guárdala en tu teléfono para tenerla siempre a mano. No necesitas instalar
           ninguna aplicación.
         </p>
 
         <div style={{ display: 'grid', gap: '0.6rem', marginTop: '1.5rem' }}>
           {wallets.apple && (
-            <a className="boton" href={`/api/wallet/apple/${card.serial}`}>
+            <a className="btn" href={`/api/wallet/apple/${card.serial}`}>
               Agregar a Apple Wallet
             </a>
           )}
           {wallets.google && (
-            <a className="boton" href={`/api/wallet/google/${card.serial}`}>
+            <a className="btn" href={`/api/wallet/google/${card.serial}`}>
               Agregar a Google Wallet
             </a>
           )}
         </div>
 
         {ninguna && (
-          <p className="secundario" style={{ fontSize: '0.8125rem' }}>
+          <p className="soft" style={{ fontSize: '0.8125rem' }}>
             La tarjeta digital estará disponible muy pronto. Mientras tanto, en el local
             te encuentran por tu teléfono.
           </p>
         )}
 
-        <p className="secundario" style={{ fontSize: '0.8125rem', marginBottom: 0 }}>
+        <p className="soft" style={{ fontSize: '0.8125rem', marginBottom: 0 }}>
           Muestra tu tarjeta en el local para sumar cada visita.
         </p>
       </div>

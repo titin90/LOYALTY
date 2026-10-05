@@ -9,7 +9,7 @@ const initialState: DashboardState = { status: 'idle' };
 function Boton() {
   const { pending } = useFormStatus();
   return (
-    <button className="boton" type="submit" disabled={pending}>
+    <button className="btn" type="submit" disabled={pending}>
       {pending ? 'Creando…' : 'Crear enlace de emparejamiento'}
     </button>
   );
@@ -19,8 +19,8 @@ export function DeviceForm() {
   const [state, formAction] = useActionState(createDevice, initialState);
 
   return (
-    <form action={formAction} className="formulario-estrecho">
-      <label className="campo">
+    <form action={formAction} className="form-narrow">
+      <label className="field">
         <span>Nombre del equipo</span>
         <input name="nombre" type="text" placeholder="Mostrador" />
       </label>
@@ -28,8 +28,8 @@ export function DeviceForm() {
       <Boton />
 
       {state.status === 'ok' && state.message && (
-        <div className="enlace-emparejar" role="status">
-          <p className="secundario" style={{ margin: 0 }}>
+        <div className="pair-link" role="status">
+          <p className="soft" style={{ margin: 0 }}>
             Abre este enlace <strong>en el teléfono del local</strong>. Vence en 15 minutos.
           </p>
           <code>{state.message}</code>
@@ -37,7 +37,7 @@ export function DeviceForm() {
       )}
 
       {state.status === 'error' && state.message && (
-        <p className="error" role="alert">
+        <p className="msg-error" role="alert">
           {state.message}
         </p>
       )}

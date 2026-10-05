@@ -47,14 +47,14 @@ export function Buscador({
   };
 
   return (
-    <div className="escaner-overlay escaner-overlay--solido escaner-overlay--arriba">
+    <div className="scan-sheet scan-sheet--solid scan-sheet--top">
       <p style={{ margin: 0, fontWeight: 600 }}>Buscar por teléfono</p>
-      <p className="secundario" style={{ margin: '0.25rem 0 1rem', fontSize: '0.8125rem' }}>
+      <p className="soft" style={{ margin: '0.25rem 0 1rem', fontSize: '0.8125rem' }}>
         Escribe al menos los últimos 4 dígitos.
       </p>
 
       <input
-        className="buscador-escaner"
+        className="scan-input"
         type="tel"
         inputMode="numeric"
         autoComplete="off"
@@ -65,11 +65,11 @@ export function Buscador({
         autoFocus
       />
 
-      <div className="buscador-resultados">
-        {buscando && <p className="secundario">Buscando…</p>}
+      <div className="scan-results">
+        {buscando && <p className="soft">Buscando…</p>}
 
         {!buscando && resultados !== null && resultados.length === 0 && (
-          <p className="secundario">Ningún customer con esos dígitos.</p>
+          <p className="soft">Ningún customer con esos dígitos.</p>
         )}
 
         {!buscando &&
@@ -77,19 +77,19 @@ export function Buscador({
             <button
               key={customer.serial}
               type="button"
-              className="buscador-resultado"
+              className="scan-result"
               onClick={() => onElegir(customer.serial)}
             >
               <span>
                 <strong>{customer.name}</strong>
-                <span className="secundario"> {customer.phoneSuffix}</span>
+                <span className="soft"> {customer.phoneSuffix}</span>
               </span>
               <span className="numero">{customer.balance}</span>
             </button>
           ))}
       </div>
 
-      <button type="button" className="boton-escaner boton-escaner--tenue" onClick={onCerrar}>
+      <button type="button" className="scan-btn scan-btn--quiet" onClick={onCerrar}>
         Volver a la cámara
       </button>
     </div>

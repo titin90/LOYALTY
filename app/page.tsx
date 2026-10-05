@@ -22,27 +22,27 @@ export default async function Inicio() {
   const negocios = esDesarrollo ? await negociosSembrados() : [];
 
   return (
-    <main className="pantalla">
-      <div className="tarjeta">
-        <p className="secundario" style={{ margin: 0, fontSize: '0.8125rem' }}>
+    <main className="screen">
+      <div className="sheet card-object">
+        <p className="soft" style={{ margin: 0, fontSize: '0.8125rem' }}>
           Tarjetas de fidelización
         </p>
         <h1 style={{ fontSize: '1.6rem', margin: '0.25rem 0 0' }}>Fidelización</h1>
 
-        <hr className="regla-dorada" />
+        <hr className="rule-gold" />
 
-        <p className="secundario" style={{ marginTop: 0 }}>
+        <p className="soft" style={{ marginTop: 0 }}>
           Tus clientes guardan su tarjeta en el teléfono y tú marcas sus visitas. Sin
           aplicaciones que instalar.
         </p>
 
         <div style={{ display: 'grid', gap: '0.6rem', marginTop: '1.5rem' }}>
-          <Link className="boton" href="/login">
+          <Link className="btn" href="/login">
             Entrar al panel
           </Link>
         </div>
 
-        <p className="secundario" style={{ fontSize: '0.8125rem' }}>
+        <p className="soft" style={{ fontSize: '0.8125rem' }}>
           El escáner del local se empareja desde <strong>Panel → Equipos</strong>. Tus clientes
           se registran en el enlace de tu negocio, no en esta página.
         </p>
@@ -50,12 +50,12 @@ export default async function Inicio() {
         {esDesarrollo && (
           <>
             <hr style={{ border: 0, borderTop: '1px solid var(--borde)', margin: '1.5rem 0 1rem' }} />
-            <p className="secundario" style={{ margin: 0, fontSize: '0.75rem', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+            <p className="soft" style={{ margin: 0, fontSize: '0.75rem', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
               Solo en desarrollo
             </p>
 
             {negocios.length === 0 ? (
-              <p className="secundario" style={{ fontSize: '0.8125rem' }}>
+              <p className="soft" style={{ fontSize: '0.8125rem' }}>
                 No hay negocios en la base. Corre <code>pnpm seed</code> para sembrar tres
                 negocios de prueba con sus clientes.
               </p>
@@ -73,7 +73,7 @@ export default async function Inicio() {
               </ul>
             )}
 
-            <p className="secundario" style={{ fontSize: '0.8125rem', marginBottom: 0 }}>
+            <p className="soft" style={{ fontSize: '0.8125rem', marginBottom: 0 }}>
               Wallets configuradas — Apple: {wallets.apple ? 'sí' : 'no'} · Google:{' '}
               {wallets.google ? 'sí' : 'no'}
             </p>

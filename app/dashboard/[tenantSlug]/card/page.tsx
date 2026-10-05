@@ -1,5 +1,5 @@
 import { requireSession } from '@/lib/actions/auth';
-import { publishedCardDesign, premios } from '@/lib/dashboard/queries';
+import { publishedCardDesign, listRewards } from '@/lib/dashboard/queries';
 import { parseCardDesign } from '@/lib/wallet/design';
 import { CardEditor } from './editor';
 
@@ -9,17 +9,18 @@ export default async function TarjetaPage() {
   const session = await requireSession();
   const [config, lista] = await Promise.all([
     publishedCardDesign(session.userId),
-    premios(session.userId),
+    listRewards(session.userId),
   ]);
 
   const primerPremio = lista.find((p) => p.active) ?? null;
 
   return (
     <>
-      <p className="secundario" style={{ marginTop: 0 }}>
-        Así se ve la card en el teléfono de tus customers. Al publicar, las tarjetas ya
-        entregadas se actualizan solas.
-      </p>
+      <header>
+        <h1>Tarjeta</h1>
+        <p>Así se ve en el teléfono de tus clientes. Al publicar, las tarjetas ya entregadas se actualizan solas.</p>
+      </header>
+
 
       <CardEditor
         inicial={parseCardDesign(config)}

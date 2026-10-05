@@ -23,18 +23,18 @@ export function PinPad({ onListo }: { onListo: (pin: string) => void }) {
   };
 
   return (
-    <div className="escaner-overlay escaner-overlay--solido">
-      <p className="secundario" style={{ margin: 0 }}>
+    <div className="scan-sheet scan-sheet--solid">
+      <p className="soft" style={{ margin: 0 }}>
         Tu PIN
       </p>
 
-      <div className="pin-puntos" aria-label={`${pin.length} de 4 dígitos`}>
+      <div className="pin-dots" aria-label={`${pin.length} de 4 dígitos`}>
         {[0, 1, 2, 3].map((i) => (
-          <span key={i} className={i < pin.length ? 'pin-punto pin-punto--lleno' : 'pin-punto'} />
+          <span key={i} className={i < pin.length ? 'pin-dot pin-dot--on' : 'pin-dot'} />
         ))}
       </div>
 
-      <div className="pin-teclado">
+      <div className="pin-keys">
         {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((d) => (
           <button key={d} type="button" onClick={() => escribir(d)}>
             {d}

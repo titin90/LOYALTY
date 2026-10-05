@@ -10,7 +10,7 @@ const initialState: DashboardState = { status: 'idle' };
 function Boton() {
   const { pending } = useFormStatus();
   return (
-    <button className="boton" type="submit" disabled={pending}>
+    <button className="btn" type="submit" disabled={pending}>
       {pending ? 'Publicando…' : 'Publicar diseño'}
     </button>
   );
@@ -37,30 +37,30 @@ export function CardEditor({
   const faltan = threshold === null ? null : Math.max(threshold - saldoEjemplo, 0);
 
   return (
-    <div className="editor-tarjeta">
-      <div className="editor-vista">
+    <div className="editor">
+      <div className="preview">
         {/* Vista previa: la misma estructura de campos que lleva el pase real. */}
         <div
-          className="pase"
+          className="pass"
           style={{ background: diseno.background, color: diseno.foreground }}
         >
-          <p className="pase-logo" style={{ color: diseno.label }}>
+          <p className="pass-logo" style={{ color: diseno.label }}>
             {diseno.logoText || business}
           </p>
 
-          <div className="pase-cabecera">
-            <span className="pase-etiqueta" style={{ color: diseno.label }}>
+          <div className="pass-row">
+            <span className="pass-unit" style={{ color: diseno.label }}>
               {diseno.unitLabel}
             </span>
-            <span className="numero pase-valor">{saldoEjemplo}</span>
+            <span className="numero pass-n">{saldoEjemplo}</span>
           </div>
 
-          <div className="pase-qr" aria-hidden />
+          <div className="pass-code" aria-hidden />
 
-          <p className="pase-etiqueta" style={{ color: diseno.label }}>
+          <p className="pass-unit" style={{ color: diseno.label }}>
             PRÓXIMO PREMIO
           </p>
-          <p className="pase-progreso">
+          <p className="pass-next">
             {reward === null
               ? 'Sigue sumando visitas'
               : faltan === 0
@@ -70,8 +70,8 @@ export function CardEditor({
         </div>
       </div>
 
-      <form action={formAction} className="editor-campos">
-        <label className="campo">
+      <form action={formAction} className="editor-fields form-narrow">
+        <label className="field">
           <span>Texto del logo</span>
           <input
             name="logoText"
@@ -83,7 +83,7 @@ export function CardEditor({
           />
         </label>
 
-        <label className="campo">
+        <label className="field">
           <span>Qué acumulan tus clientes</span>
           <input
             name="unitLabel"
@@ -99,7 +99,7 @@ export function CardEditor({
         <Color etiqueta="Texto" name="foreground" valor={diseno.foreground} onChange={actualizar} />
         <Color etiqueta="Acento" name="label" valor={diseno.label} onChange={actualizar} />
 
-        <p className="secundario" style={{ fontSize: '0.8125rem' }}>
+        <p className="soft" style={{ fontSize: '0.8125rem' }}>
           El acento se usa en etiquetas y bordes. Cubrir la tarjeta entera de dorado es lo
           que la hace ver recargada.
         </p>
@@ -107,7 +107,7 @@ export function CardEditor({
         <Boton />
 
         {state.message && (
-          <p className={state.status === 'error' ? 'error' : 'exito'} role="status">
+          <p className={state.status === 'error' ? 'msg-error' : 'exito'} role="status">
             {state.message}
           </p>
         )}
@@ -128,9 +128,9 @@ function Color({
   onChange: (campo: keyof CardDesign, valor: string) => void;
 }) {
   return (
-    <label className="campo campo-color">
+    <label className="field field-color">
       <span>{etiqueta}</span>
-      <span className="campo-color-fila">
+      <span className="color-row">
         <input
           type="color"
           value={valor}

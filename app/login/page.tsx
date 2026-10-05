@@ -9,13 +9,13 @@ export default async function EntrarPage() {
   if (session) redirect(`/dashboard/${session.tenantSlug}`);
 
   return (
-    <main className="pantalla">
-      <div className="tarjeta">
+    <main className="screen">
+      <div className="sheet card-object">
         <h1 style={{ fontSize: '1.5rem', margin: 0 }}>Entrar</h1>
-        <p className="secundario" style={{ marginTop: '0.35rem' }}>
+        <p className="soft" style={{ marginTop: '0.35rem' }}>
           Panel de tu negocio.
         </p>
-        <hr className="regla-dorada" />
+        <hr className="rule-gold" />
         <LoginForm />
       </div>
     </main>

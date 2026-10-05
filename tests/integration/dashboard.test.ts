@@ -8,12 +8,12 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { signIn } from '@/lib/auth/login';
 import {
-  resumen,
+  dashboardSummary,
   customers,
   atRiskCustomers,
-  premios,
-  equipos,
-  actividad,
+  listRewards,
+  listDevices,
+  recentLedger,
   publishedCardDesign,
 } from '@/lib/dashboard/queries';
 import { registerCard } from '@/lib/registration';
@@ -110,7 +110,7 @@ describe('consultas del panel bajo RLS', () => {
     await registerCard({ tenantSlug: 'barberia-a', name: 'Ana', phone: '+56911112222', consent: true });
     await registerCard({ tenantSlug: 'cafe-b', name: 'Beto', phone: '+56933334444', consent: true });
 
-    const datos = await resumen(a.userId);
+    const datos = await dashboardSummary(a.userId);
     // El negocio A tiene su cliente sembrado más Ana; el de B no aparece.
     expect(datos.customers).toBe(2);
   });
@@ -144,13 +144,13 @@ describe('consultas del panel bajo RLS', () => {
   });
 
   it('los premios son solo los del propio negocio', async () => {
-    const lista = await premios(a.userId);
+    const lista = await listRewards(a.userId);
     expect(lista).toHaveLength(1);
     expect(lista[0]!.name).toBe('Corte gratis');
   });
 
   it('los equipos son solo los del propio negocio', async () => {
-    const lista = await equipos(a.userId);
+    const lista = await listDevices(a.userId);
     expect(lista).toHaveLength(1);
     expect(lista[0]!.name).toBe('Mostrador');
   });
@@ -170,8 +170,8 @@ describe('consultas del panel bajo RLS', () => {
       idempotencyKey: crypto.randomUUID(),
     });
 
-    const ledger = await actividad(a.userId);
-    expect(ledger[0]).toMatchObject({ tipo: 'earn', delta: 1, customer: 'Cliente' });
+    const ledger = await recentLedger(a.userId);
+    expect(ledger[0]).toMatchObject({ kind: 'earn', delta: 1, customer: 'Cliente' });
   });
 
   it('sin diseño publicado devuelve null', async () => {

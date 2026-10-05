@@ -171,7 +171,7 @@ export interface PrivacyRequest {
   overdue: boolean;
 }
 
-export async function solicitudes(userId: string): Promise<PrivacyRequest[]> {
+export async function listPrivacyRequests(userId: string): Promise<PrivacyRequest[]> {
   const filas = await withUserSession(userId, async (tx) => {
     const result = (await tx.execute(
       sql`select d.id, d.kind, d.status, d.due_at, d.created_at, c.name

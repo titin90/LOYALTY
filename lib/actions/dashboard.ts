@@ -43,7 +43,7 @@ export async function createReward(_previous: DashboardState, formData: FormData
     ),
   );
 
-  revalidatePath(`/dashboard/${session.tenantSlug}/premios`);
+  revalidatePath(`/dashboard/${session.tenantSlug}/listRewards`);
   return { status: 'ok', message: 'Reward creado.' };
 }
 
@@ -56,7 +56,7 @@ export async function toggleReward(formData: FormData): Promise<void> {
     tx.execute(sql`update rewards set active = not active where id = ${id}::uuid`),
   );
 
-  revalidatePath(`/dashboard/${session.tenantSlug}/premios`);
+  revalidatePath(`/dashboard/${session.tenantSlug}/listRewards`);
 }
 
 export async function saveCardDesign(_previous: DashboardState, formData: FormData): Promise<DashboardState> {
@@ -111,7 +111,7 @@ export async function createDevice(_previous: DashboardState, formData: FormData
     deviceSecret(),
   );
 
-  revalidatePath(`/dashboard/${session.tenantSlug}/equipos`);
+  revalidatePath(`/dashboard/${session.tenantSlug}/listDevices`);
   return {
     status: 'ok',
     message: `${appUrl()}/pair?t=${token}`,
@@ -127,7 +127,7 @@ export async function revokeDevice(formData: FormData): Promise<void> {
     tx.execute(sql`update devices set revoked_at = now() where id = ${id}::uuid`),
   );
 
-  revalidatePath(`/dashboard/${session.tenantSlug}/equipos`);
+  revalidatePath(`/dashboard/${session.tenantSlug}/listDevices`);
 }
 
 /* ── Derechos ARCO (Ley 21.719) ─────────────────────────────────────────────
@@ -172,7 +172,7 @@ export async function recordPrivacyRequestAction(formData: FormData): Promise<vo
   const { recordPrivacyRequest } = await import('@/lib/dashboard/dsr');
   await recordPrivacyRequest(session.userId, session.tenantId, customerId, tipo as (typeof tipos)[number]);
 
-  revalidatePath(`/dashboard/${session.tenantSlug}/solicitudes`);
+  revalidatePath(`/dashboard/${session.tenantSlug}/listPrivacyRequests`);
 }
 
 export async function resolvePrivacyRequestAction(formData: FormData): Promise<void> {
@@ -183,5 +183,5 @@ export async function resolvePrivacyRequestAction(formData: FormData): Promise<v
   const { resolvePrivacyRequest } = await import('@/lib/dashboard/dsr');
   await resolvePrivacyRequest(session.userId, id);
 
-  revalidatePath(`/dashboard/${session.tenantSlug}/solicitudes`);
+  revalidatePath(`/dashboard/${session.tenantSlug}/listPrivacyRequests`);
 }

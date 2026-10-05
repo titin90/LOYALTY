@@ -126,7 +126,7 @@ export async function recordScan(request: ScanRequest): Promise<ScanOutcome> {
       }
 
       // Bajo RLS: solo pueden aparecer premios de este negocio.
-      const premios = (await tx.execute(
+      const listRewards = (await tx.execute(
         sql`select id, name, threshold from public.rewards
             where active and threshold <= ${row.r.balance}
             order by threshold desc`,
@@ -139,7 +139,7 @@ export async function recordScan(request: ScanRequest): Promise<ScanOutcome> {
           earned: row.r.earned ?? 0,
           balance: row.r.balance,
           pointsToNextReward: row.r.points_to_next_reward,
-          redeemable: premios.map((p) => ({ id: p.id, name: p.name, threshold: p.threshold })),
+          redeemable: listRewards.map((p) => ({ id: p.id, name: p.name, threshold: p.threshold })),
           duplicate: row.r.duplicate,
         },
       };

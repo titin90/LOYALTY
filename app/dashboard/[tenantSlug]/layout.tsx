@@ -5,17 +5,17 @@ import { requireSession, logout } from '@/lib/actions/auth';
 
 export const dynamic = 'force-dynamic';
 
-const SECCIONES = [
-  { href: '', etiqueta: 'DashboardSummary' },
-  { href: '/clientes', etiqueta: 'Clientes' },
-  { href: '/riesgo', etiqueta: 'En riesgo' },
-  { href: '/premios', etiqueta: 'Premios' },
-  { href: '/tarjeta', etiqueta: 'Tarjeta' },
-  { href: '/equipos', etiqueta: 'Equipos' },
-  { href: '/solicitudes', etiqueta: 'Solicitudes' },
+const SECTIONS = [
+  { href: '', label: 'Resumen' },
+  { href: '/customers', label: 'Clientes' },
+  { href: '/at-risk', label: 'En riesgo' },
+  { href: '/rewards', label: 'Premios' },
+  { href: '/card', label: 'Tarjeta' },
+  { href: '/devices', label: 'Equipos' },
+  { href: '/privacy-requests', label: 'Datos personales' },
 ];
 
-export default async function PanelLayout({
+export default async function DashboardLayout({
   children,
   params,
 }: {
@@ -32,28 +32,31 @@ export default async function PanelLayout({
   const base = `/dashboard/${tenantSlug}`;
 
   return (
-    <div className="panel">
-      <header className="panel-cabecera">
-        <div>
-          <p className="panel-negocio">{session.tenantSlug}</p>
-          <p className="secundario panel-quien">{session.name}</p>
+    <div className="shell">
+      <aside className="side">
+        <div className="side-head">
+          <p className="side-name">{session.tenantSlug}</p>
         </div>
-        <form action={logout}>
-          <button type="submit" className="panel-salir">
-            Salir
-          </button>
-        </form>
-      </header>
 
-      <nav className="panel-nav">
-        {SECCIONES.map((s) => (
-          <Link key={s.href} href={`${base}${s.href}`}>
-            {s.etiqueta}
-          </Link>
-        ))}
-      </nav>
+        <nav className="side-nav" aria-label="Secciones">
+          {SECTIONS.map((s) => (
+            <Link key={s.href} href={`${base}${s.href}`}>
+              {s.label}
+            </Link>
+          ))}
+        </nav>
 
-      <div className="panel-contenido">{children}</div>
+        <div className="side-foot">
+          <p className="side-who">{session.name}</p>
+          <form action={logout}>
+            <button type="submit" className="signout">
+              Salir
+            </button>
+          </form>
+        </div>
+      </aside>
+
+      <main className="main">{children}</main>
     </div>
   );
 }

@@ -25,7 +25,7 @@ export interface DashboardSummary {
   scansThisWeek: number;
 }
 
-export async function resumen(userId: string): Promise<DashboardSummary> {
+export async function dashboardSummary(userId: string): Promise<DashboardSummary> {
   const [fila] = await rows<Record<string, string>>(
     userId,
     sql`
@@ -75,7 +75,7 @@ interface CustomerQueryRow {
 export async function customers(
   userId: string,
   busqueda = '',
-  limite = 50,
+  limit = 50,
 ): Promise<CustomerRow[]> {
   const patron = `%${busqueda.trim().toLowerCase()}%`;
 
@@ -90,7 +90,7 @@ export async function customers(
       where c.deleted_at is null
         and (${busqueda.trim() === ''} or lower(c.name) like ${patron} or c.phone_e164 like ${patron})
       order by last_visit desc nulls last, c.created_at desc
-      limit ${limite}
+      limit ${limit}
     `,
   );
 
@@ -166,7 +166,7 @@ export interface Reward {
   active: boolean;
 }
 
-export async function premios(userId: string): Promise<Reward[]> {
+export async function listRewards(userId: string): Promise<Reward[]> {
   const filas = await rows<{ id: string; name: string; threshold: number; active: boolean }>(
     userId,
     sql`select id, name, threshold, active from rewards order by sort_order, threshold`,
@@ -192,7 +192,7 @@ export interface Device {
   locked: boolean;
 }
 
-export async function equipos(userId: string): Promise<Device[]> {
+export async function listDevices(userId: string): Promise<Device[]> {
   const filas = await rows<{
     id: string;
     name: string;
@@ -213,11 +213,11 @@ export async function equipos(userId: string): Promise<Device[]> {
 export interface LedgerEntry {
   at: Date;
   customer: string;
-  tipo: string;
+  kind: string;
   delta: number;
 }
 
-export async function actividad(userId: string, limite = 20): Promise<LedgerEntry[]> {
+export async function recentLedger(userId: string, limit = 20): Promise<LedgerEntry[]> {
   const filas = await rows<{ created_at: string; name: string; kind: string; delta: number }>(
     userId,
     sql`
@@ -226,14 +226,14 @@ export async function actividad(userId: string, limite = 20): Promise<LedgerEntr
       join cards k on k.id = e.card_id
       join customers c on c.id = k.customer_id
       order by e.created_at desc
-      limit ${limite}
+      limit ${limit}
     `,
   );
 
   return filas.map((f) => ({
     at: new Date(f.created_at),
     customer: f.name,
-    tipo: f.kind,
+    kind: f.kind,
     delta: f.delta,
   }));
 }

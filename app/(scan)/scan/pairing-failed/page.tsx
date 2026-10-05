@@ -12,11 +12,11 @@ export default async function EmparejamientoFallido({
   const { motivo } = await searchParams;
 
   return (
-    <main className="pantalla">
-      <div className="tarjeta" style={{ textAlign: 'center' }}>
+    <main className="screen">
+      <div className="sheet card-object" style={{ textAlign: 'center' }}>
         <h1 style={{ fontSize: '1.3rem', margin: 0 }}>No se pudo emparejar</h1>
-        <hr className="regla-dorada" style={{ margin: '1.25rem auto' }} />
-        <p className="secundario">{MOTIVOS[motivo ?? ''] ?? MOTIVOS.invalido}</p>
+        <hr className="rule-gold" style={{ margin: '1.25rem auto' }} />
+        <p className="soft">{MOTIVOS[motivo ?? ''] ?? MOTIVOS.invalido}</p>
       </div>
     </main>
   );

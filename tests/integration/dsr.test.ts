@@ -7,7 +7,7 @@ import {
   exportCustomer,
   eraseCustomer,
   recordPrivacyRequest,
-  solicitudes,
+  listPrivacyRequests,
   resolvePrivacyRequest,
   DSR_DEADLINE_DAYS,
 } from '@/lib/dashboard/dsr';
@@ -143,7 +143,7 @@ describe('solicitudes ARCO', () => {
   it('se registran con su plazo legal', async () => {
     await recordPrivacyRequest(a.userId, a.tenantId, a.customerId, 'deletion');
 
-    const lista = await solicitudes(a.userId);
+    const lista = await listPrivacyRequests(a.userId);
     expect(lista).toHaveLength(1);
     expect(lista[0]!.tipo).toBe('deletion');
     expect(lista[0]!.estado).toBe('open');
@@ -158,7 +158,7 @@ describe('solicitudes ARCO', () => {
       insert into public.dsr_requests (tenant_id, customer_id, kind, due_at)
       values (${a.tenantId}, ${a.customerId}, 'access', now() - interval '1 day')
     `;
-    expect((await solicitudes(a.userId))[0]!.overdue).toBe(true);
+    expect((await listPrivacyRequests(a.userId))[0]!.overdue).toBe(true);
   });
 
   it('una resuelta deja de estar vencida', async () => {
@@ -166,16 +166,16 @@ describe('solicitudes ARCO', () => {
       insert into public.dsr_requests (tenant_id, customer_id, kind, due_at)
       values (${a.tenantId}, ${a.customerId}, 'access', now() - interval '1 day')
     `;
-    const [solicitud] = await solicitudes(a.userId);
+    const [solicitud] = await listPrivacyRequests(a.userId);
     await resolvePrivacyRequest(a.userId, solicitud!.id);
 
-    const despues = (await solicitudes(a.userId))[0]!;
+    const despues = (await listPrivacyRequests(a.userId))[0]!;
     expect(despues.estado).toBe('resolved');
     expect(despues.overdue).toBe(false);
   });
 
   it('el dueño de otro negocio no ve estas solicitudes', async () => {
     await recordPrivacyRequest(a.userId, a.tenantId, a.customerId, 'deletion');
-    expect(await solicitudes(b.userId)).toEqual([]);
+    expect(await listPrivacyRequests(b.userId)).toEqual([]);
   });
 });

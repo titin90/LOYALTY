@@ -9,7 +9,7 @@ const initialState: LoginState = { status: 'idle' };
 function SubmitButton() {
   const { pending } = useFormStatus();
   return (
-    <button className="boton" type="submit" disabled={pending}>
+    <button className="btn" type="submit" disabled={pending}>
       {pending ? 'Entrando…' : 'Entrar'}
     </button>
   );
@@ -21,7 +21,7 @@ export function LoginForm() {
 
   return (
     <form action={formAction} noValidate>
-      <label className="campo">
+      <label className="field">
         <span>Correo</span>
         <input
           name="email"
@@ -31,10 +31,10 @@ export function LoginForm() {
           required
           aria-invalid={errors.email !== undefined}
         />
-        {errors.email && <p className="error">{errors.email}</p>}
+        {errors.email && <p className="msg-error">{errors.email}</p>}
       </label>
 
-      <label className="campo">
+      <label className="field">
         <span>Contraseña</span>
         <input
           name="password"
@@ -44,13 +44,13 @@ export function LoginForm() {
           required
           aria-invalid={errors.password !== undefined}
         />
-        {errors.password && <p className="error">{errors.password}</p>}
+        {errors.password && <p className="msg-error">{errors.password}</p>}
       </label>
 
       <SubmitButton />
 
       {state.message && (
-        <p className="error" role="alert" style={{ textAlign: 'center', marginTop: '0.75rem' }}>
+        <p className="msg-error" role="alert" style={{ textAlign: 'center', marginTop: '0.75rem' }}>
           {state.message}
         </p>
       )}

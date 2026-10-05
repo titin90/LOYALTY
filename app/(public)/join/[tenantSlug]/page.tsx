@@ -17,17 +17,17 @@ export default async function RegisterPage({
   const primerPremio = tenant.rewards[0];
 
   return (
-    <main className="pantalla">
-      <div className="tarjeta">
-        <p className="secundario" style={{ margin: 0, fontSize: '0.8125rem' }}>
+    <main className="screen">
+      <div className="sheet card-object">
+        <p className="soft" style={{ margin: 0, fontSize: '0.8125rem' }}>
           Tarjeta de fidelización
         </p>
         <h1 style={{ fontSize: '1.6rem', margin: '0.25rem 0 0' }}>{tenant.name}</h1>
 
-        <hr className="regla-dorada" />
+        <hr className="rule-gold" />
 
         {primerPremio ? (
-          <p className="secundario" style={{ marginTop: 0 }}>
+          <p className="soft" style={{ marginTop: 0 }}>
             Junta <strong>{primerPremio.threshold}</strong> visitas y llévate{' '}
             <strong>{primerPremio.name}</strong>.
             {tenant.welcomeBonusPoints > 0 && (
@@ -43,7 +43,7 @@ export default async function RegisterPage({
             )}
           </p>
         ) : (
-          <p className="secundario" style={{ marginTop: 0 }}>
+          <p className="soft" style={{ marginTop: 0 }}>
             Registra tu tarjeta y empieza a juntar visitas.
           </p>
         )}

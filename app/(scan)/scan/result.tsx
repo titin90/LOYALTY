@@ -58,11 +58,11 @@ export function Resultado({
 
   if (!outcome.ok) {
     return (
-      <div className="escaner-overlay escaner-overlay--solido">
-        <p className="resultado-titulo" style={{ color: 'var(--error)' }}>
+      <div className="scan-sheet scan-sheet--solid">
+        <p className="scan-title" style={{ color: 'var(--error)' }}>
           {outcome.message}
         </p>
-        <button type="button" className="boton-escaner" onClick={onCerrar}>
+        <button type="button" className="scan-btn" onClick={onCerrar}>
           Continuar
         </button>
       </div>
@@ -73,13 +73,13 @@ export function Resultado({
 
   if (canjeado !== null) {
     return (
-      <div className="escaner-overlay escaner-overlay--solido">
-        <p className="secundario" style={{ margin: 0 }}>
+      <div className="scan-sheet scan-sheet--solid">
+        <p className="soft" style={{ margin: 0 }}>
           Canje registrado
         </p>
-        <p className="resultado-titulo">{canjeado}</p>
-        <p className="secundario">Entrégale su reward a {customerName}.</p>
-        <button type="button" className="boton-escaner" onClick={onCerrar}>
+        <p className="scan-title">{canjeado}</p>
+        <p className="soft">Entrégale su reward a {customerName}.</p>
+        <button type="button" className="scan-btn" onClick={onCerrar}>
           Listo
         </button>
       </div>
@@ -87,38 +87,38 @@ export function Resultado({
   }
 
   return (
-    <div className="escaner-overlay escaner-overlay--solido">
-      <p className="secundario" style={{ margin: 0 }}>
+    <div className="scan-sheet scan-sheet--solid">
+      <p className="soft" style={{ margin: 0 }}>
         {duplicate ? 'Ya estaba marcada' : '¡Visita marcada!'}
       </p>
-      <p className="resultado-titulo">{customerName}</p>
+      <p className="scan-title">{customerName}</p>
 
-      <p className="numero resultado-puntos">
+      <p className="numero scan-n">
         {balance}
-        <span className="secundario" style={{ fontSize: '1rem', fontWeight: 400 }}>
+        <span className="soft" style={{ fontSize: '1rem', fontWeight: 400 }}>
           {balance === 1 ? ' punto' : ' puntos'}
         </span>
       </p>
 
       {!duplicate && earned > 0 && (
-        <p className="secundario" style={{ margin: 0 }}>
+        <p className="soft" style={{ margin: 0 }}>
           +{earned} en esta visita
         </p>
       )}
 
-      <hr className="regla-dorada" style={{ margin: '1.25rem auto' }} />
+      <hr className="rule-gold" style={{ margin: '1.25rem auto' }} />
 
       {redeemable.length > 0 ? (
         <>
           <p style={{ margin: 0, fontWeight: 600 }}>
             {redeemable.length === 1 ? 'Puede canjear:' : 'Puede canjear:'}
           </p>
-          <div className="canje-opciones">
+          <div className="redeem-list">
             {redeemable.map((reward) => (
               <button
                 key={reward.id}
                 type="button"
-                className="boton-canje"
+                className="redeem-btn"
                 disabled={canjeando !== null}
                 onClick={() => void canjear(reward)}
               >
@@ -127,16 +127,16 @@ export function Resultado({
             ))}
           </div>
           {errorCanje && (
-            <p className="error" role="alert">
+            <p className="msg-error" role="alert">
               {errorCanje}
             </p>
           )}
-          <button type="button" className="boton-escaner boton-escaner--tenue" onClick={onCerrar}>
+          <button type="button" className="scan-btn scan-btn--quiet" onClick={onCerrar}>
             Ahora no
           </button>
         </>
       ) : (
-        <p className="secundario" style={{ margin: 0 }}>
+        <p className="soft" style={{ margin: 0 }}>
           {pointsToNextReward === null
             ? 'Sigue sumando visitas'
             : `Le ${pointsToNextReward === 1 ? 'falta' : 'faltan'} ${pointsToNextReward} para el premio`}

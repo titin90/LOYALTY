@@ -30,31 +30,31 @@ export default async function FichaCliente({
   return (
     <>
       <h2 style={{ fontSize: '1.35rem', margin: '0 0 0.25rem' }}>{datos.subject.name}</h2>
-      <p className="secundario" style={{ margin: 0 }}>
+      <p className="soft" style={{ margin: 0 }}>
         {formatChileanPhone(datos.subject.phone)} · customer since{' '}
         {new Date(datos.subject.customerSince).toLocaleDateString('es-CL', { dateStyle: 'medium' })}
       </p>
 
-      <div className="tarjetas-metrica" style={{ marginTop: '1.5rem' }}>
-        <div className="metrica">
-          <p className="numero metrica-valor">{datos.card?.balance ?? 0}</p>
-          <p className="secundario metrica-etiqueta">Puntos</p>
+      <div className="figures" style={{ marginTop: '1.5rem' }}>
+        <div className="figure">
+          <p className="numero figure-n">{datos.card?.balance ?? 0}</p>
+          <p className="soft figure-label">Puntos</p>
         </div>
-        <div className="metrica">
-          <p className="numero metrica-valor">
+        <div className="figure">
+          <p className="numero figure-n">
             {datos.ledger.filter((m) => m.tipo === 'earn').length}
           </p>
-          <p className="secundario metrica-etiqueta">Visitas</p>
+          <p className="soft figure-label">Visitas</p>
         </div>
-        <div className="metrica">
-          <p className="numero metrica-valor">{datos.redemptions.length}</p>
-          <p className="secundario metrica-etiqueta">Canjes</p>
+        <div className="figure">
+          <p className="numero figure-n">{datos.redemptions.length}</p>
+          <p className="soft figure-label">Canjes</p>
         </div>
       </div>
 
-      <h2 className="seccion-titulo">Movimientos</h2>
-      <div className="tabla-envoltorio">
-        <table className="tabla">
+      <h2 className="section-title">Movimientos</h2>
+      <div className="table-scroll">
+        <table className="data">
           <thead>
             <tr>
               <th>Fecha</th>
@@ -65,7 +65,7 @@ export default async function FichaCliente({
           <tbody>
             {datos.ledger.map((m, i) => (
               <tr key={i}>
-                <td className="secundario">
+                <td className="soft">
                   {new Date(m.date).toLocaleString('es-CL', { dateStyle: 'short', timeStyle: 'short' })}
                 </td>
                 <td>{ETIQUETAS[m.tipo] ?? m.tipo}</td>
@@ -76,21 +76,21 @@ export default async function FichaCliente({
         </table>
       </div>
 
-      <h2 className="seccion-titulo">Derechos del subject</h2>
-      <p className="secundario" style={{ marginTop: 0 }}>
+      <h2 className="section-title">Derechos del subject</h2>
+      <p className="soft" style={{ marginTop: 0 }}>
         Si esta persona te pide acceder a sus datos o eliminarlos, tienes 30 días para
         responder. Registra la solicitud para no perder el plazo de vista.
       </p>
 
-      <div className="acciones-arco">
-        <a className="boton-menor" href={`/api/dashboard/exportar/${customerId}`}>
+      <div className="row-actions">
+        <a className="btn-quiet" href={`/api/dashboard/exportar/${customerId}`}>
           Descargar sus datos
         </a>
 
         <form action={recordPrivacyRequestAction}>
           <input type="hidden" name="customerId" value={customerId} />
           <input type="hidden" name="tipo" value="access" />
-          <button type="submit" className="boton-menor">
+          <button type="submit" className="btn-quiet">
             Registrar solicitud de acceso
           </button>
         </form>
@@ -98,7 +98,7 @@ export default async function FichaCliente({
         <form action={recordPrivacyRequestAction}>
           <input type="hidden" name="customerId" value={customerId} />
           <input type="hidden" name="tipo" value="deletion" />
-          <button type="submit" className="boton-menor">
+          <button type="submit" className="btn-quiet">
             Registrar solicitud de eliminación
           </button>
         </form>

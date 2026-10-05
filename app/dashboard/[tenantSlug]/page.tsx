@@ -1,9 +1,9 @@
 import { requireSession } from '@/lib/actions/auth';
-import { resumen, actividad } from '@/lib/dashboard/queries';
+import { dashboardSummary, recentLedger } from '@/lib/dashboard/queries';
 
 export const dynamic = 'force-dynamic';
 
-const ETIQUETAS: Record<string, string> = {
+const EVENT_LABEL: Record<string, string> = {
   earn: 'Visita',
   redeem: 'Canje',
   welcome_bonus: 'Bono de bienvenida',
@@ -12,68 +12,79 @@ const ETIQUETAS: Record<string, string> = {
   expire: 'Vencimiento',
 };
 
-export default async function ResumenPage() {
+export default async function SummaryPage() {
   const session = await requireSession();
-  const [datos, ledger] = await Promise.all([
-    resumen(session.userId),
-    actividad(session.userId),
+  const [summary, ledger] = await Promise.all([
+    dashboardSummary(session.userId),
+    recentLedger(session.userId),
   ]);
 
   return (
     <>
-      <div className="tarjetas-metrica">
-        <Metrica valor={datos.customers} etiqueta="Clientes" />
-        <Metrica valor={datos.visitsThisMonth} etiqueta="Visitas este mes" />
-        <Metrica valor={datos.redemptionsThisMonth} etiqueta="Canjes este mes" />
-        <Metrica valor={datos.newCustomersThisMonth} etiqueta="Nuevos este mes" />
-      </div>
+      <header>
+        <h1>Resumen</h1>
+      </header>
 
-      {datos.scansThisWeek === 0 && (
-        <p className="aviso">
-          No se ha marcado ninguna visita en los últimos 7 días. Si el escáner dejó de
-          usarse, los clientes verán su tarjeta congelada y la abandonarán.
-        </p>
-      )}
+      <dl className="figures">
+        <Figure n={summary.customers} label="Clientes" />
+        <Figure n={summary.visitsThisMonth} label="Visitas este mes" gold />
+        <Figure n={summary.redemptionsThisMonth} label="Canjes este mes" />
+        <Figure n={summary.newCustomersThisMonth} label="Nuevos este mes" />
+      </dl>
 
-      <h2 className="seccion-titulo">Últimos ledger</h2>
-
-      {ledger.length === 0 ? (
-        <p className="secundario">Todavía no hay ledger.</p>
-      ) : (
-        <div className="tabla-envoltorio">
-          <table className="tabla">
-            <thead>
-              <tr>
-                <th>Cuándo</th>
-                <th>Cliente</th>
-                <th>Qué pasó</th>
-                <th className="num">Puntos</th>
-              </tr>
-            </thead>
-            <tbody>
-              {ledger.map((m, i) => (
-                <tr key={i}>
-                  <td className="secundario">
-                    {m.at.toLocaleString('es-CL', { dateStyle: 'short', timeStyle: 'short' })}
-                  </td>
-                  <td>{m.customer}</td>
-                  <td>{ETIQUETAS[m.tipo] ?? m.tipo}</td>
-                  <td className="num">{m.delta > 0 ? `+${m.delta}` : m.delta}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {summary.scansThisWeek === 0 && (
+        <div className="notice notice--alert">
+          <h2>Nadie marcó visitas esta semana</h2>
+          <p>
+            Si el escáner dejó de usarse, tus clientes verán su tarjeta congelada y la
+            abandonarán. Revisa que el equipo del mostrador siga emparejado.
+          </p>
         </div>
       )}
+
+      <section className="section">
+        <h2>Últimos movimientos</h2>
+
+        {ledger.length === 0 ? (
+          <p className="soft">
+            Todavía no hay movimientos. Aparecerán en cuanto marques la primera visita.
+          </p>
+        ) : (
+          <div className="table-scroll">
+            <table className="data">
+              <thead>
+                <tr>
+                  <th>Cuándo</th>
+                  <th>Cliente</th>
+                  <th>Qué pasó</th>
+                  <th className="num">Puntos</th>
+                </tr>
+              </thead>
+              <tbody>
+                {ledger.map((entry, i) => (
+                  <tr key={i}>
+                    <td className="soft">
+                      {entry.at.toLocaleString('es-CL', { dateStyle: 'short', timeStyle: 'short' })}
+                    </td>
+                    <td>{entry.customer}</td>
+                    <td>{EVENT_LABEL[entry.kind] ?? entry.kind}</td>
+                    <td className="num">{entry.delta > 0 ? `+${entry.delta}` : entry.delta}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
     </>
   );
 }
 
-function Metrica({ valor, etiqueta }: { valor: number; etiqueta: string }) {
+function Figure({ n, label, gold = false }: { n: number; label: string; gold?: boolean }) {
   return (
-    <div className="metrica">
-      <p className="numero metrica-valor">{valor}</p>
-      <p className="secundario metrica-etiqueta">{etiqueta}</p>
+    <div className="figure">
+      <dd className={gold ? 'numero figure-n figure-n--gold' : 'numero figure-n'}>{n}</dd>
+      <dt className="figure-label">{label}</dt>
     </div>
   );
 }

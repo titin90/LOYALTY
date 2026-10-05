@@ -1,5 +1,5 @@
 import { requireSession } from '@/lib/actions/auth';
-import { premios } from '@/lib/dashboard/queries';
+import { listRewards } from '@/lib/dashboard/queries';
 import { toggleReward } from '@/lib/actions/dashboard';
 import { RewardForm } from './form';
 
@@ -7,17 +7,19 @@ export const dynamic = 'force-dynamic';
 
 export default async function PremiosPage() {
   const session = await requireSession();
-  const lista = await premios(session.userId);
+  const lista = await listRewards(session.userId);
 
   return (
     <>
-      <p className="secundario" style={{ marginTop: 0 }}>
-        El reward active con el threshold más bajo es el que ven tus customers en la card.
-      </p>
+      <header>
+        <h1>Premios</h1>
+        <p>El premio activo con el umbral más bajo es el que tus clientes ven en su tarjeta.</p>
+      </header>
+
 
       {lista.length > 0 && (
-        <div className="tabla-envoltorio">
-          <table className="tabla">
+        <div className="table-scroll">
+          <table className="data">
             <thead>
               <tr>
                 <th>Reward</th>
@@ -31,11 +33,11 @@ export default async function PremiosPage() {
                 <tr key={p.id}>
                   <td>{p.name}</td>
                   <td className="num numero">{p.threshold}</td>
-                  <td className="secundario">{p.active ? 'Activo' : 'Pausado'}</td>
+                  <td className="soft">{p.active ? 'Activo' : 'Pausado'}</td>
                   <td className="num">
                     <form action={toggleReward}>
                       <input type="hidden" name="id" value={p.id} />
-                      <button type="submit" className="boton-menor">
+                      <button type="submit" className="btn-quiet">
                         {p.active ? 'Pausar' : 'Activar'}
                       </button>
                     </form>
@@ -47,7 +49,7 @@ export default async function PremiosPage() {
         </div>
       )}
 
-      <h2 className="seccion-titulo">Agregar reward</h2>
+      <h2 >Agregar reward</h2>
       <RewardForm />
     </>
   );

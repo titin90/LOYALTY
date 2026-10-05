@@ -10,7 +10,7 @@ const initialState: RegisterState = { status: 'idle' };
 function SubmitButton() {
   const { pending } = useFormStatus();
   return (
-    <button className="boton" type="submit" disabled={pending}>
+    <button className="btn" type="submit" disabled={pending}>
       {pending ? 'Creando tu tarjeta…' : 'Crear mi tarjeta'}
     </button>
   );
@@ -24,7 +24,7 @@ export function RegisterForm({ tenantSlug }: { tenantSlug: string }) {
     <form action={formAction} noValidate>
       <input type="hidden" name="tenantSlug" value={tenantSlug} />
 
-      <label className="campo">
+      <label className="field">
         <span>Tu nombre</span>
         <input
           name="name"
@@ -34,10 +34,10 @@ export function RegisterForm({ tenantSlug }: { tenantSlug: string }) {
           required
           aria-invalid={errors.name !== undefined}
         />
-        {errors.name && <p className="error">{errors.name}</p>}
+        {errors.name && <p className="msg-error">{errors.name}</p>}
       </label>
 
-      <label className="campo">
+      <label className="field">
         <span>Tu celular</span>
         <input
           name="phone"
@@ -49,10 +49,10 @@ export function RegisterForm({ tenantSlug }: { tenantSlug: string }) {
           required
           aria-invalid={errors.phone !== undefined}
         />
-        {errors.phone && <p className="error">{errors.phone}</p>}
+        {errors.phone && <p className="msg-error">{errors.phone}</p>}
       </label>
 
-      <label className="campo">
+      <label className="field">
         <span>
           ¿Te invitó alguien? <span style={{ color: 'var(--texto-secundario)' }}>(opcional)</span>
         </span>
@@ -65,16 +65,16 @@ export function RegisterForm({ tenantSlug }: { tenantSlug: string }) {
         />
       </label>
 
-      <label className="consentimiento">
+      <label className="consent">
         <input name="consent" type="checkbox" required />
         <span>{CONSENT_TEXT}</span>
       </label>
-      {errors.consent && <p className="error" style={{ marginTop: '-0.75rem' }}>{errors.consent}</p>}
+      {errors.consent && <p className="msg-error" style={{ marginTop: '-0.75rem' }}>{errors.consent}</p>}
 
       <SubmitButton />
 
       {state.message && (
-        <p className="error" role="alert" style={{ textAlign: 'center', marginTop: '0.75rem' }}>
+        <p className="msg-error" role="alert" style={{ textAlign: 'center', marginTop: '0.75rem' }}>
           {state.message}
         </p>
       )}

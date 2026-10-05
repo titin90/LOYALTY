@@ -1,5 +1,5 @@
 import { requireSession } from '@/lib/actions/auth';
-import { equipos } from '@/lib/dashboard/queries';
+import { listDevices } from '@/lib/dashboard/queries';
 import { revokeDevice } from '@/lib/actions/dashboard';
 import { DeviceForm } from './form';
 
@@ -7,18 +7,19 @@ export const dynamic = 'force-dynamic';
 
 export default async function EquiposPage() {
   const session = await requireSession();
-  const lista = await equipos(session.userId);
+  const lista = await listDevices(session.userId);
 
   return (
     <>
-      <p className="secundario" style={{ marginTop: 0 }}>
-        Cada teléfono o tablet que marca visits es un equipo. Revocar uno lo deja fuera
-        en el siguiente escaneo, aunque siga abierto.
-      </p>
+      <header>
+        <h1>Equipos</h1>
+        <p>Cada teléfono o tablet que marca visitas es un equipo. Revocar uno lo deja fuera en el siguiente escaneo, aunque siga abierto.</p>
+      </header>
+
 
       {lista.length > 0 && (
-        <div className="tabla-envoltorio">
-          <table className="tabla">
+        <div className="table-scroll">
+          <table className="data">
             <thead>
               <tr>
                 <th>Device</th>
@@ -31,19 +32,19 @@ export default async function EquiposPage() {
               {lista.map((e) => (
                 <tr key={e.id}>
                   <td>{e.name}</td>
-                  <td className="secundario">
+                  <td className="soft">
                     {e.lastSeen
                       ? e.lastSeen.toLocaleString('es-CL', { dateStyle: 'short', timeStyle: 'short' })
                       : 'Nunca'}
                   </td>
-                  <td className="secundario">
+                  <td className="soft">
                     {e.revoked ? 'Revocado' : e.locked ? 'Bloqueado por PIN' : 'Activo'}
                   </td>
                   <td className="num">
                     {!e.revoked && (
                       <form action={revokeDevice}>
                         <input type="hidden" name="id" value={e.id} />
-                        <button type="submit" className="boton-menor">
+                        <button type="submit" className="btn-quiet">
                           Revocar
                         </button>
                       </form>
@@ -56,7 +57,7 @@ export default async function EquiposPage() {
         </div>
       )}
 
-      <h2 className="seccion-titulo">Agregar un equipo</h2>
+      <h2 >Agregar un equipo</h2>
       <DeviceForm />
     </>
   );

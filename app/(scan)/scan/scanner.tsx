@@ -170,15 +170,15 @@ export function Scanner() {
 
   if (estado === 'sin-camara') {
     return (
-      <main className="pantalla">
-        <div className="tarjeta" style={{ textAlign: 'center' }}>
+      <main className="screen">
+        <div className="sheet card-object" style={{ textAlign: 'center' }}>
           <h1 style={{ fontSize: '1.25rem', margin: 0 }}>Sin acceso a la cámara</h1>
-          <hr className="regla-dorada" style={{ margin: '1.25rem auto' }} />
-          <p className="secundario">
+          <hr className="rule-gold" style={{ margin: '1.25rem auto' }} />
+          <p className="soft">
             Autoriza la cámara en los ajustes del navegador. Mientras tanto puedes marcar
             buscando por teléfono.
           </p>
-          <button type="button" className="boton" onClick={() => setEstado('pin')}>
+          <button type="button" className="btn" onClick={() => setEstado('pin')}>
             Buscar por teléfono
           </button>
         </div>
@@ -187,18 +187,18 @@ export function Scanner() {
   }
 
   return (
-    <main className="escaner">
-      <video ref={videoRef} className="escaner-video" playsInline muted />
+    <main className="scan">
+      <video ref={videoRef} className="scan-video" playsInline muted />
       <canvas ref={canvasRef} hidden />
 
-      <div className="escaner-marco" aria-hidden />
+      <div className="scan-frame" aria-hidden />
 
-      <header className="escaner-barra">
+      <header className="scan-bar">
         <span>{enLinea ? 'Listo para escanear' : 'Sin conexión'}</span>
-        <span className="escaner-barra-derecha">
-          {enCola > 0 && <span className="escaner-pendientes">{enCola} por enviar</span>}
+        <span className="scan-bar-right">
+          {enCola > 0 && <span className="scan-queued">{enCola} por enviar</span>}
           {estado === 'escaneando' && (
-            <button type="button" className="escaner-buscar" onClick={() => setEstado('buscando')}>
+            <button type="button" className="scan-find" onClick={() => setEstado('buscando')}>
               Buscar por teléfono
             </button>
           )}
@@ -226,7 +226,7 @@ export function Scanner() {
         />
       )}
 
-      {estado === 'enviando' && <div className="escaner-overlay">Marcando…</div>}
+      {estado === 'enviando' && <div className="scan-sheet">Marcando…</div>}
 
       {estado === 'resultado' && outcome && (
         <Resultado
