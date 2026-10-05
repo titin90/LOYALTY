@@ -347,3 +347,81 @@ describe('búsqueda por teléfono', () => {
     expect(outcome.ok && outcome.result.balance).toBe(1);
   });
 });
+
+describe('solicitud de reseña de Google', () => {
+  const scan = () =>
+    recordScan({
+      serial: a.cardSerial,
+      pin: a.staffPin,
+      claims: claimsFor(a),
+      idempotencyKey: key(),
+    });
+
+  /** Deja la tarjeta con n visitas previas, sin tocar la ventana antifraude. */
+  const seedVisits = async (n: number) => {
+    for (let i = 0; i < n; i += 1) {
+      await sql`
+        insert into public.point_events (tenant_id, card_id, delta, kind, idempotency_key, created_at)
+        values (${a.tenantId}, ${a.cardId}, 1, 'earn', ${'prev' + i},
+                now() - make_interval(days => ${(i + 1) * 10}))
+      `;
+    }
+  };
+
+  it('sin enlace configurado no se registra ninguna solicitud', async () => {
+    await seedVisits(5);
+    await scan();
+    expect(await sql`select 1 from public.review_prompts`).toHaveLength(0);
+  });
+
+  it('con enlace y visitas suficientes se registra una', async () => {
+    await sql`update public.tenant_settings set google_review_url = 'https://g.page/r/x/review'
+              where tenant_id = ${a.tenantId}`;
+    await seedVisits(5);
+    await scan();
+
+    const filas = await sql<{ customer_id: string }[]>`select customer_id from public.review_prompts`;
+    expect(filas).toHaveLength(1);
+    expect(filas[0]!.customer_id).toBe(a.customerId);
+  });
+
+  it('no se pide antes de la visita mínima', async () => {
+    await sql`update public.tenant_settings set google_review_url = 'https://g.page/r/x/review'
+              where tenant_id = ${a.tenantId}`;
+    await scan();
+    expect(await sql`select 1 from public.review_prompts`).toHaveLength(0);
+  });
+
+  it('respeta el tope: no se repite dentro de la ventana', async () => {
+    await sql`update public.tenant_settings set google_review_url = 'https://g.page/r/x/review'
+              where tenant_id = ${a.tenantId}`;
+    await sql`insert into public.review_prompts (tenant_id, customer_id)
+              values (${a.tenantId}, ${a.customerId})`;
+    await seedVisits(5);
+    await scan();
+
+    expect(await sql`select 1 from public.review_prompts`).toHaveLength(1);
+  });
+
+  it('el enlace llega al pase solo cuando hay solicitud vigente', async () => {
+    await sql`update public.tenant_settings set google_review_url = 'https://g.page/r/x/review'
+              where tenant_id = ${a.tenantId}`;
+
+    const { passPayload } = await import('@/lib/wallet/issue');
+    expect((await passPayload(a.cardSerial))?.review_url).toBeNull();
+
+    await sql`insert into public.review_prompts (tenant_id, customer_id)
+              values (${a.tenantId}, ${a.customerId})`;
+    expect((await passPayload(a.cardSerial))?.review_url).toBe('https://g.page/r/x/review');
+  });
+
+  it('una solicitud vieja ya no aparece en el pase', async () => {
+    await sql`update public.tenant_settings set google_review_url = 'https://g.page/r/x/review'
+              where tenant_id = ${a.tenantId}`;
+    await sql`insert into public.review_prompts (tenant_id, customer_id, sent_at)
+              values (${a.tenantId}, ${a.customerId}, now() - interval '40 days')`;
+
+    const { passPayload } = await import('@/lib/wallet/issue');
+    expect((await passPayload(a.cardSerial))?.review_url).toBeNull();
+  });
+});

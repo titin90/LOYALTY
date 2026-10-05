@@ -130,6 +130,64 @@ export async function revokeDevice(formData: FormData): Promise<void> {
   revalidatePath(`/dashboard/${session.tenantSlug}/listDevices`);
 }
 
+const settingsSchema = z.object({
+  pointsPerVisit: z.coerce.number().int().min(1).max(100),
+  welcomeBonusPoints: z.coerce.number().int().min(0).max(100),
+  referralBonusPoints: z.coerce.number().int().min(0).max(100),
+  earnCooldownMinutes: z.coerce.number().int().min(0).max(10080),
+  riskMultiplier: z.coerce.number().int().min(2).max(10),
+  reviewPromptMinVisits: z.coerce.number().int().min(1).max(50),
+  reviewPromptCooldownDays: z.coerce.number().int().min(7).max(365),
+  // Vacío significa "no pedir reseñas": sin enlace el pase no lo muestra.
+  googleReviewUrl: z
+    .string()
+    .trim()
+    .max(300)
+    .refine((v) => v === '' || /^https:\/\/\S+$/.test(v), 'Debe empezar con https://')
+    .transform((v) => (v === '' ? null : v)),
+});
+
+export async function saveSettings(
+  _previous: DashboardState,
+  formData: FormData,
+): Promise<DashboardState> {
+  const session = await requireSession();
+
+  const parsed = settingsSchema.safeParse({
+    pointsPerVisit: formData.get('pointsPerVisit'),
+    welcomeBonusPoints: formData.get('welcomeBonusPoints'),
+    referralBonusPoints: formData.get('referralBonusPoints'),
+    earnCooldownMinutes: formData.get('earnCooldownMinutes'),
+    riskMultiplier: formData.get('riskMultiplier'),
+    reviewPromptMinVisits: formData.get('reviewPromptMinVisits'),
+    reviewPromptCooldownDays: formData.get('reviewPromptCooldownDays'),
+    googleReviewUrl: formData.get('googleReviewUrl') ?? '',
+  });
+
+  if (!parsed.success) {
+    return { status: 'error', message: parsed.error.issues[0]?.message ?? 'Revisa los valores' };
+  }
+
+  const v = parsed.data;
+
+  await withUserSession(session.userId, (tx) =>
+    tx.execute(
+      sql`update tenant_settings set
+            points_per_visit = ${v.pointsPerVisit},
+            welcome_bonus_points = ${v.welcomeBonusPoints},
+            referral_bonus_points = ${v.referralBonusPoints},
+            earn_cooldown_minutes = ${v.earnCooldownMinutes},
+            risk_multiplier = ${v.riskMultiplier},
+            review_prompt_min_visits = ${v.reviewPromptMinVisits},
+            review_prompt_cooldown_days = ${v.reviewPromptCooldownDays},
+            google_review_url = ${v.googleReviewUrl}`,
+    ),
+  );
+
+  revalidatePath(`/dashboard/${session.tenantSlug}/settings`);
+  return { status: 'ok', message: 'Ajustes guardados.' };
+}
+
 /* ── Derechos ARCO (Ley 21.719) ─────────────────────────────────────────────
    El negocio es el responsable de los datos; estas acciones son la herramienta
    con la que responde a su cliente. Todo bajo RLS con su propia sesión. */

@@ -67,6 +67,7 @@ describe('buildLoyaltyObject', () => {
     balance: 3,
     progressText: 'Te faltan 2 visitas para un corte gratis',
     design,
+    reviewUrl: null,
   });
 
   it('apunta a la clase de su negocio', () => {
@@ -92,6 +93,7 @@ describe('signSaveJwt', () => {
       balance: 1,
       progressText: '',
       design,
+      reviewUrl: null,
     });
 
     const jwt = await signSaveJwt(account, objeto, ['https://app.ejemplo.cl']);
@@ -151,5 +153,28 @@ describe('parseServiceAccount', () => {
     ['null', 'nulo'],
   ])('rechaza %s (%s)', (json) => {
     expect(() => parseServiceAccount(json)).toThrow(/client_email|private_key/);
+  });
+});
+
+describe('enlace de reseña en Google Wallet', () => {
+  const base = {
+    issuerId: ISSUER,
+    tenantSlug: 'x',
+    serial: 'a'.repeat(32),
+    customerName: 'Ana',
+    balance: 6,
+    progressText: '',
+    design,
+  };
+
+  it('sin solicitud vigente el objeto no lleva módulo de enlaces', () => {
+    expect(buildLoyaltyObject({ ...base, reviewUrl: null })).not.toHaveProperty('linksModuleData');
+  });
+
+  it('con solicitud vigente lo lleva', () => {
+    const objeto = buildLoyaltyObject({ ...base, reviewUrl: 'https://g.page/r/abc/review' });
+    expect(objeto.linksModuleData).toMatchObject({
+      uris: [{ id: 'resena', uri: 'https://g.page/r/abc/review' }],
+    });
   });
 });

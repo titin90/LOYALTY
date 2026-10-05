@@ -86,10 +86,19 @@ async function pushGoogle(serial: string): Promise<void> {
         textModulesData: [
           {
             id: 'progreso',
-            header: 'PRÓXIMO PREMIO',
+            header: 'Próximo premio',
             body: progressText(payload.points_to_next, payload.reward_name),
           },
         ],
+        ...(payload.review_url === null
+          ? {}
+          : {
+              linksModuleData: {
+                uris: [
+                  { id: 'resena', uri: payload.review_url, description: '¿Cómo lo hicimos?' },
+                ],
+              },
+            }),
       }),
     },
   );

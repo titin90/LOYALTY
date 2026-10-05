@@ -85,49 +85,73 @@ Sin mezclas. `customer.phone_e164`, nunca `cliente.telefono`.
 ## Stack
 
 ```
-Next.js (App Router) + TypeScript estricto
-Postgres (Supabase) + RLS · Drizzle ORM · Zod
-Supabase Auth (staff de locales) · Supabase Storage (logos)
-Inngest (jobs) · Vercel (hosting) · Sentry (errores)
+Next.js 16 (App Router) + TypeScript 6 estricto · React 19
+Postgres 17 + RLS · Drizzle ORM + postgres.js · Zod
+Autenticación propia por cookie firmada HMAC — no Supabase Auth
+node-forge + fflate (firma del .pkpass) · jose (JWT de Google y APNs)
+zxing-wasm (lectura de QR; Safari no trae BarcodeDetector)
+Vercel (hosting + cron de retención)
 ```
+
+Pendiente del stack planeado y no instalado: Sentry e Inngest. Los avisos a las
+wallets corren en línea con tope de 2 s; deberían ser una cola.
 
 El cliente final **no tiene cuenta**. Su credencial es el pase en la wallet.
 
 ### Comandos
 
-> Se completan al cerrar la Fase 0; hasta entonces el proyecto es solo documentación.
-
 ```bash
-pnpm dev              # app en local
-pnpm db:start         # Supabase local (Docker)
-pnpm db:migrate       # aplicar migraciones
-pnpm db:generate      # generar migración desde el schema de Drizzle
-pnpm test             # unitarios (/lib/domain)
-pnpm test:isolation   # suite de acceso cruzado entre tenants
+pnpm dev               # app en local
+pnpm seed              # 3 negocios y ~120 clientes de prueba (destructivo, solo local)
+pnpm db:migrate        # aplicar migraciones
+pnpm db:generate       # generar migración desde el schema de Drizzle
+pnpm test              # dominio, sin base de datos
+pnpm test:integration  # flujos completos contra Postgres
+pnpm test:isolation    # acceso cruzado entre negocios
+pnpm retention         # simula la purga (--aplicar para ejecutarla)
 pnpm typecheck
 pnpm lint
+```
+
+Postgres local (se detiene al reiniciar el equipo):
+
+```bash
+export PATH="/opt/homebrew/opt/postgresql@17/bin:$PATH"
+pg_ctl -D /opt/homebrew/var/postgresql@17 -o "-p 54322" -l /tmp/pg17.log start
 ```
 
 ---
 
 ## Mapa de carpetas
 
+Las rutas son identificadores: van en **inglés**. El slug del negocio es lo único
+que queda tal como lo escribe el cliente.
+
 ```
 /app
-  /(public)/r/[tenantSlug]/   registro del cliente + entrega de la tarjeta
-  /(public)/p/[serial]/       re-descarga de tarjeta perdida
-  /(panel)/[tenantSlug]/      panel del dueño
-  /(scan)/scan/               PWA del escáner
-  /api/v1/                    web service de Apple Wallet — protocolo FIJO, no inventar rutas
-  /api/google/                callbacks de Google Wallet
+  /(public)/join/[tenantSlug]/   registro del cliente
+  /(public)/join/[tenantSlug]/done/  entrega de la tarjeta a la wallet
+  /login/                        entrada del dueño al panel
+  /pair/                         canjea el enlace de emparejamiento del equipo
+  /dashboard/[tenantSlug]/       panel: customers · at-risk · rewards · card
+                                 devices · settings · privacy-requests
+  /(scan)/scan/                  PWA del escáner
+  /api/v1/                       web service de Apple Wallet — protocolo FIJO
+  /api/wallet/{apple,google}/    emisión del pase
+  /api/dashboard/export/         exportación ARCO
+  /api/cron/retention            purga por retención (cron de Vercel)
+  /_components/                  componentes compartidos del sistema visual
 /lib
-  /db/       schema Drizzle, migraciones, políticas RLS
-  /domain/   lógica pura sin I/O: puntos, umbrales, referidos, riesgo
-  /wallet/   apple/ (firma .pkpass, APNs) · google/ (JWT, REST)
-  /auth/
-  /jobs/     funciones Inngest
+  /db/         schema Drizzle, migraciones, políticas RLS
+  /domain/     lógica pura sin I/O: puntos, umbrales, referidos, riesgo, serial
+  /wallet/     apple/ (firma .pkpass, APNs) · google/ (JWT, REST)
+  /auth/       sesión del panel por cookie firmada
+  /dashboard/  consultas y derechos ARCO, todo bajo RLS
+  /scanner/    cola sin conexión
+  /security/   cabeceras y límite por IP
 /tests
-  /domain/     cobertura exhaustiva de /lib/domain
+  /domain/     sin base de datos — tests/domain/setup.ts borra DATABASE_URL
+  /integration/ flujos completos contra Postgres real
   /isolation/  acceso cruzado entre tenants — bloquea el merge
 ```
 
@@ -181,6 +205,29 @@ pnpm lint
 4. Antes de dar una tarea por terminada: typecheck + lint + tests pasan, y si tocaste datos personales, el `audit_log` registra la operación.
 
 ---
+
+## Sistema visual
+
+La paleta y la tipografía están fijadas en `idea-2-identidad-visual.md` y no se
+cambian sin que el dueño del proyecto lo pida. El sistema vive en
+`app/globals.css` como tokens; nada de colores ni tamaños sueltos en estilos en
+línea.
+
+- **El dorado es acento.** Nunca cubre una superficie grande. Señala oportunidad;
+  el ladrillo señala atención. No se mezclan y ninguno es decoración.
+- **Tres niveles de superficie.** El contenido se apoya en el fondo; solo los
+  objetos de verdad se levantan. Dar borde, radio y sombra a cada bloque aplana
+  la jerarquía en vez de crearla.
+- **El motivo es la tarjeta perforada.** El progreso se dibuja con marcas
+  (`app/_components/punches.tsx`), no con barras ni números: se lee de un vistazo
+  desde el otro lado del mostrador, que es la distancia real de uso.
+- **El estado se encoda en la forma, no solo en el número.** En riesgo, el grosor
+  de la banda izquierda crece con el atraso.
+- **Sin etiquetas en MAYÚSCULAS sobre los títulos y sin metadatos unidos con
+  puntos medios.** Son los dos tics que delatan una interfaz generada.
+- Los estados vacíos dicen qué hacer, no que no hay nada.
+
+Para rediseñar algo, carga antes la skill `frontend-design`.
 
 ## Invariantes de producto que mandan sobre el diseño técnico
 

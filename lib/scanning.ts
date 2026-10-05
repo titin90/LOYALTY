@@ -8,10 +8,11 @@
  * `app.record_scan` / `app.redeem_reward`, nunca este código.
  */
 import { sql } from 'drizzle-orm';
-import { withUserSession } from '@/lib/db/client';
+import { withUserSession, type Transaction } from '@/lib/db/client';
 import { rootCauseMessage, sqlState } from '@/lib/db/errors';
 import type { DeviceClaims } from '@/lib/device/token';
 import { pushCardUpdate } from '@/lib/wallet/push';
+import { shouldPromptReview } from '@/lib/domain/risk';
 
 export interface RedeemableReward {
   readonly id: string;
@@ -122,6 +123,7 @@ export async function recordScan(request: ScanRequest): Promise<ScanOutcome> {
       }
 
       if (!row.r.duplicate) {
+        await maybePromptReview(tx, found[0]!.id, serial);
         await notifyWallets(found[0]!.id, serial);
       }
 
@@ -204,6 +206,74 @@ export async function redeemReward(request: RedeemRequest): Promise<RedeemOutcom
       return { ok: false, failure: 'reward_gone', message: 'Ese premio ya no está disponible.' };
     }
     return mapped;
+  }
+}
+
+/**
+ * Decide si corresponde pedirle una reseña a este cliente y lo registra.
+ *
+ * El enlace viaja DENTRO del pase, en la siguiente actualización: no se abre un
+ * canal nuevo. La decisión la toma `shouldPromptReview`, que está cubierta por
+ * tests, y el tope de 90 días lo respalda la tabla `review_prompts`.
+ *
+ * Nunca se dan puntos a cambio de la reseña: eso viola las políticas de Google y
+ * le puede costar al negocio su ficha completa.
+ */
+async function maybePromptReview(
+  tx: Transaction,
+  cardId: string,
+  serial: string,
+): Promise<void> {
+  try {
+    const rows = (await tx.execute(
+      sql`select
+            (select count(*) from public.point_events e
+              where e.card_id = ${cardId}::uuid and e.kind = 'earn') as visits,
+            (select max(rp.sent_at) from public.review_prompts rp
+              join public.cards k on k.customer_id = rp.customer_id
+              where k.id = ${cardId}::uuid) as last_prompt,
+            (select count(*) from public.redemptions d
+              where d.card_id = ${cardId}::uuid
+                and d.created_at > now() - interval '5 minutes') as just_redeemed,
+            s.review_prompt_cooldown_days as cooldown,
+            s.review_prompt_min_visits as min_visits,
+            s.google_review_url as url
+          from public.tenant_settings s
+          where s.tenant_id = (select tenant_id from public.cards where id = ${cardId}::uuid)`,
+    )) as unknown as {
+      visits: string;
+      last_prompt: string | null;
+      just_redeemed: string;
+      cooldown: number;
+      min_visits: number;
+      url: string | null;
+    }[];
+
+    const row = rows[0];
+    // Sin enlace configurado no hay nada que pedir.
+    if (!row || !row.url) return;
+
+    const decide = shouldPromptReview({
+      visitCount: Number(row.visits),
+      minVisits: row.min_visits,
+      lastPromptAt: row.last_prompt ? new Date(row.last_prompt) : null,
+      cooldownDays: row.cooldown,
+      justRedeemed: Number(row.just_redeemed) > 0,
+      now: new Date(),
+    });
+
+    if (!decide) return;
+
+    await tx.execute(
+      sql`insert into public.review_prompts (tenant_id, customer_id)
+          select k.tenant_id, k.customer_id from public.cards k where k.id = ${cardId}::uuid`,
+    );
+  } catch (error) {
+    // Pedir una reseña no puede hacer fallar un marcaje.
+    console.error('[escaner] no se pudo registrar la solicitud de reseña', {
+      raw: rootCauseMessage(error),
+      serial: serial.slice(0, 6),
+    });
   }
 }
 

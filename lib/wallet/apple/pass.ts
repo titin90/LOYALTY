@@ -18,6 +18,8 @@ export interface PassInput {
   readonly pointsToNextReward: number | null;
   readonly rewardName: string | null;
   readonly design: CardDesign;
+  /** Enlace de reseña, solo cuando corresponde pedirla. */
+  readonly reviewUrl: string | null;
   readonly passTypeIdentifier: string;
   readonly teamIdentifier: string;
   readonly webServiceUrl: string;
@@ -33,6 +35,7 @@ export function buildPassJson(input: PassInput): Record<string, unknown> {
     pointsToNextReward,
     rewardName,
     design,
+    reviewUrl,
     passTypeIdentifier,
     teamIdentifier,
     webServiceUrl,
@@ -88,9 +91,21 @@ export function buildPassJson(input: PassInput): Record<string, unknown> {
         },
         {
           key: 'titular',
-          label: 'A NOMBRE DE',
+          label: 'A nombre de',
           value: customerName,
         },
+        // El enlace aparece solo cuando toca pedir la reseña, y nunca a cambio
+        // de puntos: eso viola las políticas de Google.
+        ...(reviewUrl === null
+          ? []
+          : [
+              {
+                key: 'resena',
+                label: '¿Cómo lo hicimos?',
+                value: `Cuéntale a otros cómo te fue: ${reviewUrl}`,
+                changeMessage: '%@',
+              },
+            ]),
       ],
     },
   };

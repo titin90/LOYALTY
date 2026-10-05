@@ -78,6 +78,13 @@
       "when": 1789253955924,
       "tag": "0010_grant_verify_pin",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1791159196309,
+      "tag": "0011_review_prompt_in_pass",
+      "breakpoints": true
     }
   ]
 }

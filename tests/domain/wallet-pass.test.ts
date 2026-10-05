@@ -88,6 +88,7 @@ describe('buildPassJson', () => {
     pointsToNextReward: 2,
     rewardName: 'un corte gratis',
     design: parseCardDesign(undefined),
+    reviewUrl: null,
     passTypeIdentifier: 'pass.cl.ejemplo.loyalty',
     teamIdentifier: 'ABCDE12345',
     webServiceUrl: 'https://app.ejemplo.cl/api/v1',
@@ -134,5 +135,42 @@ describe('buildPassJson', () => {
   it('muestra el saldo y el progreso', () => {
     expect(storeCard.headerFields![0]!.value).toBe(3);
     expect(storeCard.secondaryFields![0]!.value).toBe('Te faltan 2 visitas para un corte gratis');
+  });
+});
+
+describe('enlace de reseña en el pase', () => {
+  const base = {
+    serial: 'a'.repeat(32),
+    authenticationToken: 'tok',
+    organizationName: 'Barbería Don Luis',
+    customerName: 'Ana Pérez',
+    balance: 6,
+    pointsToNextReward: null,
+    rewardName: 'un corte gratis',
+    design: parseCardDesign(undefined),
+    passTypeIdentifier: 'pass.cl.ejemplo.loyalty',
+    teamIdentifier: 'ABCDE12345',
+    webServiceUrl: 'https://app.ejemplo.cl/api/v1',
+  };
+
+  const backFields = (reviewUrl: string | null) => {
+    const pass = buildPassJson({ ...base, reviewUrl }) as Record<string, unknown>;
+    const storeCard = pass.storeCard as Record<string, { key: string; value: unknown }[]>;
+    return storeCard.backFields ?? [];
+  };
+
+  it('sin solicitud vigente el pase NO lleva el enlace', () => {
+    expect(backFields(null).map((f) => f.key)).not.toContain('resena');
+  });
+
+  it('con solicitud vigente aparece en la cara trasera', () => {
+    const campo = backFields('https://g.page/r/abc/review').find((f) => f.key === 'resena');
+    expect(campo).toBeDefined();
+    expect(String(campo!.value)).toContain('https://g.page/r/abc/review');
+  });
+
+  it('el enlace NO ofrece puntos a cambio: viola las políticas de Google', () => {
+    const texto = String(backFields('https://g.page/r/abc/review').find((f) => f.key === 'resena')!.value);
+    expect(texto.toLowerCase()).not.toMatch(/punto|regalo|gratis|premio|descuento/);
   });
 });

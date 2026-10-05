@@ -12,6 +12,7 @@ const SECTIONS = [
   { href: '/rewards', label: 'Premios' },
   { href: '/card', label: 'Tarjeta' },
   { href: '/devices', label: 'Equipos' },
+  { href: '/settings', label: 'Ajustes' },
   { href: '/privacy-requests', label: 'Datos personales' },
 ];
 

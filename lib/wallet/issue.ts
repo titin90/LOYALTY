@@ -26,6 +26,7 @@ export interface PassPayload {
   reward_name: string | null;
   points_to_next: number | null;
   design: unknown;
+  review_url: string | null;
   apple_pass_id: string | null;
 }
 
@@ -63,6 +64,7 @@ export async function issueApplePass(payload: PassPayload): Promise<Uint8Array |
     pointsToNextReward: payload.points_to_next,
     rewardName: payload.reward_name,
     design,
+    reviewUrl: payload.review_url,
     passTypeIdentifier: config.passTypeIdentifier,
     teamIdentifier: config.teamIdentifier,
     webServiceUrl: `${appUrl()}/api/v1`,
@@ -102,6 +104,7 @@ export async function googleSaveUrl(payload: PassPayload): Promise<string | null
     balance: payload.balance,
     progressText: progressText(payload.points_to_next, payload.reward_name),
     design,
+    reviewUrl: payload.review_url,
   });
 
   await unsafeAdminDb('platform-job').execute(

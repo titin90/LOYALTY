@@ -52,7 +52,6 @@ Un lenguaje, un repo, tipos de punta a punta. Construyendo con IA el compilador 
 ```
 /app
   /(public)/r/[tenantSlug]/        registro del cliente + entrega de la tarjeta
-  /(public)/p/[serial]/            re-descarga de tarjeta perdida
   /(panel)/[tenantSlug]/           panel del dueño
   /(scan)/scan/                    PWA del escáner (manifest + service worker)
   /api/v1/                         web service de Apple Wallet (protocolo fijo, ver abajo)
@@ -140,7 +139,7 @@ Todo lo que se pueda expresar como `CHECK`, `UNIQUE`, `NOT NULL` o `FOREIGN KEY`
 
 ### Extensiones ya previstas (diseñadas, no construidas)
 
-- `point_events.kind` soporta `balance` y `sessions` además de puntos → habilita **membresías prepagadas** (el reposicionamiento a "flujo de caja") sin migrar el ledger.
+- `point_events.kind` es hoy `earn, redeem, welcome_bonus, referral, adjust, expire`. Las **membresías prepagadas** (el reposicionamiento a "flujo de caja") exigirán agregar `balance` y `sessions` al enum — una migración de una línea, porque el ledger ya es append-only y con idempotencia. Lo que NO está hecho es el cobro.
 - `rewards` soporta N premios desde el inicio; la UI de v1 expone **uno solo**.
 - `referrals.scope = 'cross'` reserva las **alianzas entre tiendas** (ver abajo).
 
@@ -201,7 +200,7 @@ QR del local / link  →  /r/[tenantSlug]
   → pantalla con ambos botones, detectando plataforma
 ```
 
-Sin contraseña, sin correo, sin OTP. **El pase en la wallet es la credencial.** Si lo pierde, `/p/[serial]` lo re-emite — y solo ahí, que es un caso raro, se justifica un OTP por SMS.
+Sin contraseña, sin correo, sin OTP. **El pase en la wallet es la credencial.** Si lo pierde, el local lo encuentra con la **búsqueda por teléfono** del escáner y le vuelve a marcar; una página de re-descarga a distancia exigiría verificar identidad por SMS, que v1 no tiene.
 
 Validación de teléfono: formato `+56 9 XXXXXXXX` estricto y confirmación visual en pantalla. Sin verificar, pero sin typos.
 

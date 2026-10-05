@@ -210,6 +210,43 @@ export async function listDevices(userId: string): Promise<Device[]> {
   }));
 }
 
+export interface TenantSettings {
+  welcomeBonusPoints: number;
+  referralBonusPoints: number;
+  pointsPerVisit: number;
+  earnCooldownMinutes: number;
+  googleReviewUrl: string | null;
+  reviewPromptCooldownDays: number;
+  reviewPromptMinVisits: number;
+  riskMultiplier: number;
+}
+
+export async function tenantSettings(userId: string): Promise<TenantSettings | null> {
+  const [row] = await rows<{
+    welcome_bonus_points: number;
+    referral_bonus_points: number;
+    points_per_visit: number;
+    earn_cooldown_minutes: number;
+    google_review_url: string | null;
+    review_prompt_cooldown_days: number;
+    review_prompt_min_visits: number;
+    risk_multiplier: number;
+  }>(userId, sql`select * from tenant_settings limit 1`);
+
+  if (!row) return null;
+
+  return {
+    welcomeBonusPoints: row.welcome_bonus_points,
+    referralBonusPoints: row.referral_bonus_points,
+    pointsPerVisit: row.points_per_visit,
+    earnCooldownMinutes: row.earn_cooldown_minutes,
+    googleReviewUrl: row.google_review_url,
+    reviewPromptCooldownDays: row.review_prompt_cooldown_days,
+    reviewPromptMinVisits: row.review_prompt_min_visits,
+    riskMultiplier: row.risk_multiplier,
+  };
+}
+
 export interface LedgerEntry {
   at: Date;
   customer: string;

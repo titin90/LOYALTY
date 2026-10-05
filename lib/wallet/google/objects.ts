@@ -56,6 +56,7 @@ export interface LoyaltyObjectInput {
   readonly balance: number;
   readonly progressText: string;
   readonly design: CardDesign;
+  readonly reviewUrl: string | null;
 }
 
 export function buildLoyaltyObject(input: LoyaltyObjectInput): Record<string, unknown> {
@@ -75,7 +76,16 @@ export function buildLoyaltyObject(input: LoyaltyObjectInput): Record<string, un
       alternateText: input.customerName,
     },
     textModulesData: [
-      { id: 'progreso', header: 'PRÓXIMO PREMIO', body: input.progressText },
+      { id: 'progreso', header: 'Próximo premio', body: input.progressText },
     ],
+    ...(input.reviewUrl === null
+      ? {}
+      : {
+          linksModuleData: {
+            uris: [
+              { id: 'resena', uri: input.reviewUrl, description: '¿Cómo lo hicimos?' },
+            ],
+          },
+        }),
   };
 }
