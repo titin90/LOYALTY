@@ -39,6 +39,9 @@
   --alert: #8f3526;
   --alert-wash: #f7e8e3;
   --gold-wash: #f3ebdb;
+  /* Barras del gráfico: #b8955a da 2.73:1 sobre el fondo claro, bajo el
+     mínimo de 3:1. El tono oscuro pasa. */
+  --chart-bar: #b08a4a;
 
   /* ── Tipografía: escala 1.25 anclada en 15px ── */
   --display: 'Manrope', system-ui, sans-serif;
@@ -82,6 +85,7 @@
     --alert: #e5957f;
     --alert-wash: #3a2622;
     --gold-wash: #2f2719;
+    --chart-bar: #9a7c4e;
     color-scheme: dark;
   }
 }
@@ -99,6 +103,7 @@
   --alert: #e5957f;
   --alert-wash: #3a2622;
   --gold-wash: #2f2719;
+  --chart-bar: #9a7c4e;
   color-scheme: dark;
 }
 
@@ -821,3 +826,160 @@ table.data a:hover { border-bottom-color: var(--gold); }
 
 .scan-result:active { border-color: var(--gold); }
 .scan-result .numero { font-size: var(--t-md); color: var(--gold); }
+
+/* ═══ Gráfico de visitas por semana ═════════════════════════════════════════
+   Una sola serie: sin leyenda, el título la nombra. Ejes recesivos, barras
+   ancladas a la línea base con extremo redondeado y 2px de separación. */
+
+.chart { margin: 0; }
+
+.chart-plot {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+  height: 6.5rem;
+  padding-top: 1.1rem;
+  border-bottom: 1px solid var(--rule);
+}
+
+.chart-col {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.chart-bar {
+  width: 100%;
+  max-width: 2.25rem;
+  background: var(--chart-bar);
+  border-radius: 4px 4px 0 0;
+  transition: background 120ms ease;
+}
+
+/* La semana en curso es la que se está leyendo: va en el tono pleno. */
+.chart-bar--now { background: var(--gold); }
+
+.chart-col:hover .chart-bar { background: var(--gold); }
+
+.chart-value {
+  position: absolute;
+  top: 0;
+  font-size: var(--t-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-faint);
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.chart-col:hover .chart-value,
+.chart-col:last-child .chart-value { opacity: 1; }
+
+.chart-tick {
+  position: absolute;
+  bottom: -1.35rem;
+  font-size: var(--t-xs);
+  color: var(--text-faint);
+  white-space: nowrap;
+}
+
+/* Solo una de cada tres marcas, o se amontonan. */
+.chart-col:not(:nth-child(3n)):not(:last-child) .chart-tick { display: none; }
+
+/* ═══ Métrica principal ═════════════════════════════════════════════════════
+   Una cifra manda y el gráfico la pone en contexto. Cuatro números del mismo
+   tamaño no dicen cuál mirar primero. */
+
+.hero {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s5);
+  padding-bottom: var(--s5);
+}
+
+.hero-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--s2) var(--s4);
+}
+
+.hero-n {
+  font-size: var(--t-3xl);
+  line-height: 0.95;
+  margin: 0;
+}
+
+.hero-label {
+  font-family: var(--body);
+  font-size: var(--t-md);
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--text-soft);
+  margin: var(--s1) 0 0;
+}
+
+.trend { font-size: var(--t-sm); color: var(--text-soft); }
+.trend--up { color: var(--gold); }
+.trend--down { color: var(--text-faint); }
+
+.figure-n--alert { color: var(--alert); }
+
+/* ═══ Paneles ═══════════════════════════════════════════════════════════════ */
+
+.panels {
+  display: grid;
+  gap: var(--s4);
+  grid-template-columns: minmax(0, 1fr);
+  /* Cada panel mide lo que mide su contenido: estirarlos a la misma altura deja
+     un hueco vacío bajo el más corto. */
+  align-items: start;
+}
+
+@media (min-width: 52rem) {
+  .panels { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s3);
+  padding: var(--s4);
+  background: var(--raised);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  min-width: 0;
+}
+
+.panel-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s3);
+}
+
+.panel-head a { font-size: var(--t-sm); color: var(--text-soft); text-decoration: none; border-bottom: 1px solid var(--rule-strong); }
+.panel-head a:hover { color: var(--text); border-bottom-color: var(--gold); }
+
+.mini-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+
+.mini-list li {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s3);
+  padding: 0.45rem 0;
+  border-bottom: 1px solid var(--rule);
+  min-width: 0;
+}
+
+.mini-list li:last-child { border-bottom: 0; }
+.mini-list a { text-decoration: none; border-bottom: 1px solid transparent; }
+.mini-list a:hover { border-bottom-color: var(--gold); }
+.mini-main { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mini-list .soft { font-size: var(--t-sm); white-space: nowrap; flex: none; }

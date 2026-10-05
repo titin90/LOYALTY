@@ -26,6 +26,9 @@ jobs:
 
     env:
       DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/postgres
+      # Los tests contra base real truncan tablas: van en su propia base para no
+      # destruir lo que tenga la de desarrollo.
+      TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/loyalty_test
       # Valor de relleno: los tests firman con su propia clave y nada aquí toca
       # producción. El secreto real vive en el entorno de despliegue.
       DEVICE_TOKEN_SECRET: ci-solo-para-pruebas-no-usar-en-produccion-32c
@@ -55,7 +58,10 @@ jobs:
         run: pnpm test
 
       - name: Migraciones
-        run: pnpm db:migrate
+        run: |
+          psql "$DATABASE_URL" -c 'create database loyalty_test'
+          pnpm db:migrate
+          pnpm db:migrate:test
 
       - name: Tests de integración
         run: pnpm test:integration

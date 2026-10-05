@@ -210,6 +210,48 @@ export async function listDevices(userId: string): Promise<Device[]> {
   }));
 }
 
+export interface WeeklyVisits {
+  /** Lunes de esa semana. */
+  readonly week: Date;
+  readonly visits: number;
+}
+
+/**
+ * Visitas por semana, las últimas `weeks`.
+ *
+ * La serie completa la genera SQL, incluidas las semanas en cero. Reconstruir
+ * los lunes en JavaScript parecía más simple y metía un error de zona horaria:
+ * `date_trunc` usa la del servidor y `Date` en UTC, así que la semana en curso
+ * no coincidía y el gráfico mostraba cero mientras el resto del panel decía que
+ * sí había visitas.
+ *
+ * Una semana sin visitas tiene que aparecer: el hueco es información — el local
+ * dejó de marcar — y omitirla lo escondería.
+ */
+export async function weeklyVisits(userId: string, weeks = 12): Promise<WeeklyVisits[]> {
+  const filas = await rows<{ week: string; visits: string }>(
+    userId,
+    sql`
+      with semanas as (
+        select generate_series(
+          date_trunc('week', now()) - make_interval(weeks => ${weeks - 1}),
+          date_trunc('week', now()),
+          interval '1 week'
+        ) as week
+      )
+      select s.week,
+             (select count(*) from point_events e
+               where e.kind = 'earn'
+                 and e.created_at >= s.week
+                 and e.created_at < s.week + interval '1 week') as visits
+      from semanas s
+      order by s.week
+    `,
+  );
+
+  return filas.map((f) => ({ week: new Date(f.week), visits: Number(f.visits) }));
+}
+
 export interface TenantSettings {
   welcomeBonusPoints: number;
   referralBonusPoints: number;

@@ -36,7 +36,9 @@ Para detenerlo: `pg_ctl -D /opt/homebrew/var/postgresql@17 stop`
 Aplica el esquema y verifica:
 
 ```bash
+createdb -p 54322 loyalty_test   # los tests usan su propia base
 pnpm db:migrate
+pnpm db:migrate:test
 pnpm test           # lógica de dominio (no necesita base de datos)
 pnpm test:isolation # aislamiento entre negocios (necesita base de datos)
 ```

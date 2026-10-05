@@ -9,17 +9,18 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "test": "vitest run --project domain",
-    "test:isolation": "vitest run --project isolation",
+    "test:isolation": "DATABASE_URL=${TEST_DATABASE_URL:-postgresql://postgres:postgres@127.0.0.1:54322/loyalty_test} vitest run --project isolation",
     "test:all": "vitest run",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx scripts/migrate.ts",
     "db:check": "drizzle-kit check",
-    "test:integration": "vitest run --project integration",
+    "test:integration": "DATABASE_URL=${TEST_DATABASE_URL:-postgresql://postgres:postgres@127.0.0.1:54322/loyalty_test} vitest run --project integration",
     "prebuild": "node scripts/copy-wasm.mjs",
     "postinstall": "node scripts/copy-wasm.mjs",
     "retention": "tsx scripts/retention.ts",
     "seed": "tsx scripts/seed.ts",
-    "shots": "tsx scripts/shots.mts"
+    "shots": "tsx scripts/shots.mts",
+    "db:migrate:test": "DATABASE_URL=${TEST_DATABASE_URL:-postgresql://postgres:postgres@127.0.0.1:54322/loyalty_test} tsx scripts/migrate.ts"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.2",
