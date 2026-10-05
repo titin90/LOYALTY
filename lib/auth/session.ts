@@ -18,6 +18,8 @@ export interface MemberSession {
   readonly userId: string;
   readonly tenantId: string;
   readonly tenantSlug: string;
+  /** Nombre del negocio tal como lo ve el público, no el slug. */
+  readonly tenantName: string;
   readonly name: string;
   readonly role: 'owner' | 'staff';
   readonly exp: number;
@@ -74,6 +76,7 @@ export function verifySession(
   }
 
   if (!UUID.test(session.userId ?? '') || !UUID.test(session.tenantId ?? '')) return null;
+  if (typeof session.tenantName !== 'string' || session.tenantName === '') return null;
   if (typeof session.exp !== 'number' || session.exp <= nowSeconds) return null;
   if (session.role !== 'owner' && session.role !== 'staff') return null;
 

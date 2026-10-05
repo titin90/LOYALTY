@@ -68,35 +68,37 @@
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
-    --ground: #141110;
-    --raised: #1e1a18;
-    --sunken: #0f0d0c;
-    --rule: #302a26;
-    --rule-strong: #463f38;
+    /* El fondo baja y las superficies suben. Antes se diferenciaban en cuatro
+       puntos de luminancia y la pantalla era una mancha negra. */
+    --ground: #100e0d;
+    --raised: #221d1a;
+    --sunken: #1a1613;
+    --rule: #39312b;
+    --rule-strong: #554c42;
     --text: #f5f1e8;
-    --text-soft: #a8a194;
-    --text-faint: #837c6f;
-    --gold: #c9a469;
-    --alert: #dd8e7a;
-    --alert-wash: #332220;
-    --gold-wash: #2a231a;
+    --text-soft: #b3ab9d;
+    --text-faint: #8c8477;
+    --gold: #d2ac70;
+    --alert: #e5957f;
+    --alert-wash: #3a2622;
+    --gold-wash: #2f2719;
     color-scheme: dark;
   }
 }
 
 :root[data-theme='dark'] {
-  --ground: #141110;
-  --raised: #1e1a18;
-  --sunken: #0f0d0c;
-  --rule: #302a26;
-  --rule-strong: #463f38;
+  --ground: #100e0d;
+  --raised: #221d1a;
+  --sunken: #1a1613;
+  --rule: #39312b;
+  --rule-strong: #554c42;
   --text: #f5f1e8;
-  --text-soft: #a8a194;
-  --text-faint: #837c6f;
-  --gold: #c9a469;
-  --alert: #dd8e7a;
-  --alert-wash: #332220;
-  --gold-wash: #2a231a;
+  --text-soft: #b3ab9d;
+  --text-faint: #8c8477;
+  --gold: #d2ac70;
+  --alert: #e5957f;
+  --alert-wash: #3a2622;
+  --gold-wash: #2f2719;
   color-scheme: dark;
 }
 
@@ -211,6 +213,12 @@ a { color: inherit; }
   border-radius: var(--radius-lg);
   padding: var(--s5);
 }
+
+/* Espaciado por flujo: cada bloque se separa del anterior. Antes dependía de
+   márgenes sueltos que se colapsaban, y el texto quedaba pegado al formulario. */
+.card-object > * + * { margin-top: var(--s4); }
+.card-object h1 + p,
+.card-object p + p { margin-top: var(--s2); }
 
 .rule-gold {
   border: 0;
@@ -365,21 +373,45 @@ a { color: inherit; }
   }
 }
 
-.side-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s3); }
-.side-name { font-family: var(--display); font-weight: 800; font-size: var(--t-md); margin: 0; }
+.side-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s3); min-width: 0; }
+.side-name {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: var(--t-md);
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .side-who { font-size: var(--t-sm); color: var(--text-faint); margin: 0; }
+
+.side-head-out { flex: none; }
+
+@media (min-width: 56rem) {
+  .side-head-out { display: none; }
+}
 
 .side-nav {
   display: flex;
   gap: var(--s1);
   overflow-x: auto;
   scrollbar-width: none;
+  /* En teléfono la fila se desliza: el degradado del borde lo anuncia. */
+  mask-image: linear-gradient(to right, #000 86%, transparent);
+  margin-inline: calc(var(--s4) * -1);
+  padding-inline: var(--s4);
 }
 
 .side-nav::-webkit-scrollbar { display: none; }
 
 @media (min-width: 56rem) {
-  .side-nav { flex-direction: column; overflow: visible; }
+  .side-nav {
+    flex-direction: column;
+    overflow: visible;
+    mask-image: none;
+    margin-inline: 0;
+    padding-inline: 0;
+  }
 }
 
 .side-nav a {
@@ -393,7 +425,11 @@ a { color: inherit; }
 
 .side-nav a:hover { color: var(--text); background: var(--sunken); }
 
-.side-foot { margin-top: auto; }
+.side-foot { display: none; }
+
+@media (min-width: 56rem) {
+  .side-foot { display: block; margin-top: auto; }
+}
 
 .signout {
   font: inherit;
@@ -429,11 +465,17 @@ a { color: inherit; }
 
 .figures {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(6.5rem, 1fr));
+  /* Dos columnas en teléfono: con tres, la cuarta cifra quedaba sola en una
+     fila y parecía un error de maquetación. */
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--s4) var(--s5);
   padding-bottom: var(--s4);
   border-bottom: 1px solid var(--rule);
   margin: 0;
+}
+
+@media (min-width: 40rem) {
+  .figures { grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr)); }
 }
 
 .figure { min-width: 0; }
@@ -489,6 +531,7 @@ table.data thead th {
 }
 
 table.data tbody tr:last-child td { border-bottom: 0; }
+table.data tbody tr:hover td { background: var(--sunken); }
 table.data .num { text-align: right; font-variant-numeric: tabular-nums; }
 table.data a { text-decoration: none; border-bottom: 1px solid var(--rule-strong); }
 table.data a:hover { border-bottom-color: var(--gold); }

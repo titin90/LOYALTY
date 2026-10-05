@@ -16,7 +16,7 @@ export default async function SummaryPage() {
   const session = await requireSession();
   const [summary, ledger] = await Promise.all([
     dashboardSummary(session.userId),
-    recentLedger(session.userId),
+    recentLedger(session.userId, 12),
   ]);
 
   return (
@@ -64,7 +64,7 @@ export default async function SummaryPage() {
                 {ledger.map((entry, i) => (
                   <tr key={i}>
                     <td className="soft">
-                      {entry.at.toLocaleString('es-CL', { dateStyle: 'short', timeStyle: 'short' })}
+                      {entry.at.toLocaleDateString('es-CL', { day: 'numeric', month: 'short' })}
                     </td>
                     <td>{entry.customer}</td>
                     <td>{EVENT_LABEL[entry.kind] ?? entry.kind}</td>

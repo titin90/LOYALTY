@@ -26,6 +26,7 @@ interface AuthRow {
     user_id?: string;
     tenant_id?: string;
     tenant_slug?: string;
+    tenant_name?: string;
     name?: string;
     role?: 'owner' | 'staff';
   };
@@ -74,6 +75,7 @@ export async function signIn(input: unknown): Promise<LoginOutcome> {
         userId: r.user_id!,
         tenantId: r.tenant_id!,
         tenantSlug: r.tenant_slug!,
+        tenantName: r.tenant_name!,
         name: r.name!,
         role: r.role!,
       },

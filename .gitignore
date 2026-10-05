@@ -20,3 +20,6 @@ next-env.d.ts
 
 # El wasm del lector se copia en postinstall/prebuild
 public/zxing_reader.wasm
+
+# Capturas de diseño en local
+/tmp/shots/

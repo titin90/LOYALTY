@@ -36,7 +36,16 @@ export default async function DashboardLayout({
     <div className="shell">
       <aside className="side">
         <div className="side-head">
-          <p className="side-name">{session.tenantSlug}</p>
+          <p className="side-name" title={session.tenantName}>
+            {session.tenantName}
+          </p>
+          {/* En teléfono el pie de la barra no se muestra, así que la salida
+              vive aquí. En escritorio se repite abajo, junto a quién eres. */}
+          <form action={logout} className="side-head-out">
+            <button type="submit" className="signout">
+              Salir
+            </button>
+          </form>
         </div>
 
         <nav className="side-nav" aria-label="Secciones">
